@@ -1,118 +1,115 @@
-import React, { useState } from 'react';
-import { Search, CloudSun, Wind, Droplets, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import SearchBar from './components/SearchBar';
+import CurrentWeather from './components/CurrentWeather';
+import ForecastList from './components/ForecastList';
 
 export default function App() {
   const [city, setCity] = useState('');
   const [weather, setWeather] = useState(null);
+  const [locationName, setLocationName] = useState('Paris');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
-  const fetchWeather = async (e) => {
-    e.preventDefault();
-    if (!city.trim()) return;
-
+  const fetchWeatherByCoords = async (lat, lon, name) => {
     setLoading(true);
-    setError(null);
-    setWeather(null);
-
+    setError('');
     try {
-      // 1. Trouver les coordonnées GPS de la ville grâce à l'API de géocodage
-      const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=fr&format=json`);
-      const geoData = await geoRes.json();
-
-      if (!geoData.results || geoData.results.length === 0) {
-        throw new Error("Ville introuvable. Vérifiez l'orthographe.");
-      }
-
-      const { latitude, longitude, name, country } = geoData.results[0];
-
-      // 2. Récupérer la météo avec les coordonnées GPS
-      const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m`);
-      const weatherData = await weatherRes.json();
-
-      setWeather({
-        name,
-        country,
-        temp: weatherData.current.temperature_2m,
-        feelsLike: weatherData.current.apparent_temperature,
-        humidity: weatherData.current.relative_humidity_2m,
-        windSpeed: weatherData.current.wind_speed_10m,
-      });
-
-    } catch (err) {
-      setError(err.message);
+      const res = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`
+      );
+      const data = await res.json();
+      setWeather(data);
+      if (name) setLocationName(name);
+    } catch {
+      setError("Impossible de récupérer les données météo.");
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchWeatherByCoords(48.8566, 2.3522, 'Paris');
+  }, []);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!city.trim()) return;
+    setLoading(true);
+    setError('');
+
+    try {
+      const geoRes = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=fr`
+      );
+      const geoData = await geoRes.json();
+
+      if (!geoData.results || geoData.results.length === 0) {
+        setError("Ville introuvable.");
+        setLoading(false);
+        return;
+      }
+
+      const { latitude, longitude, name, country } = geoData.results[0];
+      await fetchWeatherByCoords(latitude, longitude, `${name}, ${country}`);
+      setCity('');
+    } catch {
+      setError("Erreur lors de la recherche.");
+      setLoading(false);
+    }
+  };
+
+  const handleGeolocate = () => {
+    if (!navigator.geolocation) {
+      setError("La géolocalisation n'est pas supportée par votre navigateur.");
+      return;
+    }
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude, "Ma position");
+      },
+      () => {
+        setError("Accès à la position refusé.");
+        setLoading(false);
+      }
+    );
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-indigo-900 flex flex-col items-center justify-center p-4 text-white font-sans">
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-md rounded-3xl p-6 shadow-2xl border border-white/20">
-        
-        {/* Titre */}
-        <h1 className="text-3xl font-extrabold text-center mb-6 tracking-wide">AeroCast</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 py-10 px-4">
+      <div className="max-w-lg mx-auto">
+        <header className="text-center mb-8">
+          <h1 className="text-3xl font-extrabold text-white tracking-wider">METEORA</h1>
+          <p className="text-sky-300 text-sm">Tableau de bord météorologique</p>
+        </header>
 
-        {/* Formulaire de recherche */}
-        <form onSubmit={fetchWeather} className="flex gap-2 mb-6">
-          <input
-            type="text"
-            placeholder="Entrez une ville (ex: Paris, Tokyo)..."
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            className="flex-1 px-4 py-3 rounded-2xl bg-white/20 placeholder-white/70 border border-white/30 focus:outline-none focus:ring-2 focus:ring-white text-white shadow-inner"
-          />
-          <button
-            type="submit"
-            className="px-5 py-3 bg-white text-indigo-900 font-bold rounded-2xl hover:bg-opacity-90 transition shadow-lg flex items-center justify-center"
-          >
-            <Search size={22} />
-          </button>
-        </form>
-
-        {/* États : Chargement, Erreur ou Résultats */}
-        {loading && <p className="text-center text-white/80 animate-pulse py-6">Recherche en cours...</p>}
+        <SearchBar
+          city={city}
+          setCity={setCity}
+          onSearch={handleSearch}
+          onGeolocate={handleGeolocate}
+          loading={loading}
+        />
 
         {error && (
-          <div className="flex items-center gap-2 bg-red-500/20 border border-red-400 text-red-200 p-4 rounded-2xl mb-4 text-sm">
-            <AlertCircle size={20} className="shrink-0" />
-            <p>{error}</p>
+          <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded-xl mb-6 text-center">
+            {error}
+          </div>
+        )}
+
+        {loading && !weather && (
+          <div className="animate-pulse space-y-4">
+            <div className="h-48 bg-white/10 rounded-2xl"></div>
+            <div className="h-64 bg-white/10 rounded-2xl"></div>
           </div>
         )}
 
         {weather && (
-          <div className="text-center animate-fadeIn">
-            <h2 className="text-2xl font-bold mb-1">{weather.name}, {weather.country}</h2>
-            <div className="text-6xl font-black my-6 tracking-tighter">
-              {weather.temp}°C
-            </div>
-            <p className="text-white/80 text-sm mb-6">
-              Ressenti : <span className="font-semibold">{weather.feelsLike}°C</span>
-            </p>
-
-            {/* Grille des détails (Vent et Humidité) */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white/10 p-4 rounded-2xl border border-white/10 flex flex-col items-center">
-                <Droplets size={24} className="mb-1 text-blue-300" />
-                <span className="text-xs text-white/70">Humidité</span>
-                <span className="text-lg font-bold">{weather.humidity}%</span>
-              </div>
-              <div className="bg-white/10 p-4 rounded-2xl border border-white/10 flex flex-col items-center">
-                <Wind size={24} className="mb-1 text-blue-300" />
-                <span className="text-xs text-white/70">Vent</span>
-                <span className="text-lg font-bold">{weather.windSpeed} km/h</span>
-              </div>
-            </div>
-          </div>
+          <>
+            <CurrentWeather data={weather.current} cityName={locationName} />
+            <ForecastList daily={weather.daily} />
+          </>
         )}
-
-        {!weather && !loading && !error && (
-          <div className="text-center py-8 text-white/60 text-sm">
-            <CloudSun size={48} className="mx-auto mb-3 opacity-50" />
-            <p>Tapez le nom d'une ville pour découvrir sa météo en direct.</p>
-          </div>
-        )}
-
       </div>
     </div>
   );
