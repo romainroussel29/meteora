@@ -57,7 +57,11 @@ export default function App() {
       setLoading(false);
     }
   };
-
+const handleSelectSuggestion = async (item) => {
+    const displayName = `${item.name}, ${item.country}`;
+    setCity('');
+    await fetchWeatherByCoords(item.latitude, item.longitude, displayName);
+  };
   const handleGeolocate = () => {
     if (!navigator.geolocation) {
       setError("La géolocalisation n'est pas supportée par votre navigateur.");
@@ -87,6 +91,7 @@ export default function App() {
           city={city}
           setCity={setCity}
           onSearch={handleSearch}
+          onSelectSuggestion={handleSelectSuggestion}
           onGeolocate={handleGeolocate}
           loading={loading}
         />
