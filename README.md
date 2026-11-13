@@ -57,7 +57,7 @@ meteora/
 
 ## 🚀 Lancer le projet en local
 
-Si tu souhaites tester ou modifier ce projet sur ta machine :
+Pour tester ou modifier ce projet sur une machine :
 
 1. **Cloner le dépôt :**
    ```bash
@@ -75,7 +75,7 @@ Si tu souhaites tester ou modifier ce projet sur ta machine :
    npm run dev
    ```
 
-4. Ouvrir `http://localhost:5173` dans ton navigateur.
+4. Ouvrir `http://localhost:5173` dans le navigateur.
 
 ---
 
