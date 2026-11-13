@@ -1,113 +1,105 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import SearchBar from './components/SearchBar';
 import CurrentWeather from './components/CurrentWeather';
-import ForecastList from './components/ForecastList';
 import HourlyForecast from './components/HourlyForecast';
+import ForecastList from './components/ForecastList';
+import FavoritesBar from './components/FavoritesBar';
+import useWeather from './hooks/useWeather';
+import useFavorites from './hooks/useFavorites';
+import { searchCities, reverseGeocode } from './utils/api';
+import { getBackground } from './utils/background';
+
+const toLocation = (place) => ({
+  latitude: place.latitude,
+  longitude: place.longitude,
+  name: [place.name, place.country].filter(Boolean).join(', '),
+});
 
 export default function App() {
-  const [city, setCity] = useState('');
-  const [weather, setWeather] = useState(null);
-  const [locationName, setLocationName] = useState('Paris');
-  const [loading, setLoading] = useState(false);
+  const { data, location, setLocation, loading, error: weatherError } = useWeather();
+  const { favorites, isFavorite, toggleFavorite, removeFavorite } = useFavorites();
   const [error, setError] = useState('');
+  const [locating, setLocating] = useState(false);
 
-  const fetchWeatherByCoords = async (lat, lon, name) => {
-    setLoading(true);
+  const goTo = (loc) => {
     setError('');
-    try {
-      const res = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,is_day,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,weather_code,is_day,precipitation_probability,wind_speed_10m,wind_direction_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,wind_direction_10m_dominant&forecast_days=7&timezone=auto`
-      );
-      const data = await res.json();
-      setWeather(data);
-      if (name) setLocationName(name);
-    } catch {
-      setError("Impossible de récupérer les données météo.");
-    } finally {
-      setLoading(false);
-    }
+    setLocation(loc);
   };
 
-  useEffect(() => {
-    fetchWeatherByCoords(48.8566, 2.3522, 'Paris');
-  }, []);
-
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!city.trim()) return;
-    setLoading(true);
-    setError('');
-
+  // Recherche via le bouton "Chercher" quand aucune suggestion n'est affichée
+  const handleSearch = async (query) => {
     try {
-      const geoRes = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=fr`
-      );
-      const geoData = await geoRes.json();
-
-      if (!geoData.results || geoData.results.length === 0) {
-        setError("Ville introuvable.");
-        setLoading(false);
-        return;
+      const [place] = await searchCities(query, { count: 1 });
+      if (!place) {
+        setError('Ville introuvable.');
+        return false;
       }
-
-      const { latitude, longitude, name, country } = geoData.results[0];
-      await fetchWeatherByCoords(latitude, longitude, `${name}, ${country}`);
-      setCity('');
+      goTo(toLocation(place));
+      return true;
     } catch {
-      setError("Erreur lors de la recherche.");
-      setLoading(false);
+      setError('Erreur lors de la recherche.');
+      return false;
     }
   };
-const handleSelectSuggestion = async (item) => {
-    const displayName = `${item.name}, ${item.country}`;
-    setCity('');
-    await fetchWeatherByCoords(item.latitude, item.longitude, displayName);
-  };
+
   const handleGeolocate = () => {
     if (!navigator.geolocation) {
       setError("La géolocalisation n'est pas supportée par votre navigateur.");
       return;
     }
-    setLoading(true);
+    setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude, "Ma position");
+      async ({ coords }) => {
+        // On essaie de retrouver le nom de la ville ; sinon on garde "Ma position"
+        const name = await reverseGeocode(coords.latitude, coords.longitude).catch(() => null);
+        goTo({ latitude: coords.latitude, longitude: coords.longitude, name: name ?? 'Ma position' });
+        setLocating(false);
       },
       () => {
-        setError("Accès à la position refusé.");
-        setLoading(false);
+        setError('Accès à la position refusé.');
+        setLocating(false);
       }
     );
   };
 
+  const weather = data?.weather;
+  const busy = loading || locating;
+  const shownError = error || weatherError;
+  const background = getBackground(weather?.current.weather_code, weather?.current.is_day !== 0);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-sky-950 to-slate-900 py-8 md:py-12 px-4 md:px-8">
+    <div className={`min-h-screen bg-gradient-to-br ${background} py-8 md:py-12 px-4 md:px-8 transition-colors duration-700`}>
       <div className="max-w-6xl mx-auto">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-8">
+        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-6">
           <div className="text-center md:text-left">
             <h1 className="text-3xl font-extrabold text-white tracking-wider">METEORA</h1>
             <p className="text-sky-300 text-sm">Tableau de bord météorologique</p>
           </div>
           <div className="w-full md:max-w-md">
             <SearchBar
-              city={city}
-              setCity={setCity}
               onSearch={handleSearch}
-              onSelectSuggestion={handleSelectSuggestion}
+              onSelectSuggestion={(place) => goTo(toLocation(place))}
               onGeolocate={handleGeolocate}
-              loading={loading}
+              loading={busy}
             />
           </div>
         </header>
 
-        {error && (
-          <div className="bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded-2xl mb-6 text-center">
-            {error}
+        <FavoritesBar
+          favorites={favorites}
+          current={location}
+          onSelect={goTo}
+          onRemove={removeFavorite}
+        />
+
+        {shownError && (
+          <div role="alert" className="bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded-2xl mb-6 text-center">
+            {shownError}
           </div>
         )}
 
-        {loading && !weather && (
-          <div className="animate-pulse space-y-6">
+        {!weather && busy && (
+          <div className="animate-pulse space-y-6" aria-label="Chargement">
             <div className="h-72 bg-white/10 rounded-3xl"></div>
             <div className="h-80 bg-white/10 rounded-3xl"></div>
             <div className="h-56 bg-white/10 rounded-3xl"></div>
@@ -115,19 +107,23 @@ const handleSelectSuggestion = async (item) => {
         )}
 
         {weather && (
-          <div className={`space-y-6 transition-opacity ${loading ? 'opacity-60' : ''}`}>
+          <main className={`space-y-6 transition-opacity ${busy ? 'opacity-60' : ''}`} aria-busy={busy}>
             <CurrentWeather
               data={weather.current}
-              cityName={locationName}
+              cityName={data.location.name}
+              isFavorite={isFavorite(data.location)}
+              onToggleFavorite={() => toggleFavorite(data.location)}
               today={{
                 min: weather.daily.temperature_2m_min[0],
                 max: weather.daily.temperature_2m_max[0],
                 rain: weather.daily.precipitation_probability_max[0],
+                sunrise: weather.daily.sunrise[0],
+                sunset: weather.daily.sunset[0],
               }}
             />
             <HourlyForecast hourly={weather.hourly} currentTime={weather.current.time} />
-            <ForecastList daily={weather.daily} />
-          </div>
+            <ForecastList daily={weather.daily} hourly={weather.hourly} />
+          </main>
         )}
       </div>
     </div>

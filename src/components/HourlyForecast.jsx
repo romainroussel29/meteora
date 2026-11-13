@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { Thermometer, Droplets, Wind } from 'lucide-react';
 import { getWeatherInfo } from '../utils/weatherIcons';
+import { getUpcomingHours } from '../utils/hourly';
 import useHourStep from '../hooks/useHourStep';
 import WindArrow from './WindArrow';
 
@@ -19,23 +20,7 @@ export default function HourlyForecast({ hourly, currentTime }) {
   const gradientId = useId();
   const step = useHourStep();
 
-  // Les heures sont dans le fuseau local de la ville : on compare "YYYY-MM-DDTHH"
-  const start = Math.max(
-    hourly.time.findIndex((t) => t.slice(0, 13) === currentTime.slice(0, 13)),
-    0
-  );
-  const hours = [];
-  for (let i = start; i < start + HOURS && i < hourly.time.length; i += step) {
-    hours.push({
-      time: hourly.time[i],
-      temp: hourly.temperature_2m[i],
-      code: hourly.weather_code[i],
-      isDay: hourly.is_day?.[i] !== 0,
-      rain: hourly.precipitation_probability?.[i] ?? 0,
-      windSpeed: hourly.wind_speed_10m[i],
-      windDir: hourly.wind_direction_10m[i],
-    });
-  }
+  const hours = getUpcomingHours(hourly, currentTime, { hours: HOURS, step });
 
   const n = hours.length;
   const temps = hours.map((h) => h.temp);
