@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import SearchBar from './components/SearchBar';
 import CurrentWeather from './components/CurrentWeather';
 import HourlyForecast from './components/HourlyForecast';
@@ -6,7 +6,8 @@ import ForecastList from './components/ForecastList';
 import FavoritesBar from './components/FavoritesBar';
 import useWeather from './hooks/useWeather';
 import useFavorites from './hooks/useFavorites';
-import { searchCities, reverseGeocode } from './utils/api';
+import { searchCities } from './utils/api';
+import { getCurrentLocation } from './utils/geolocation';
 import { getBackground } from './utils/background';
 
 const toLocation = (place) => ({
@@ -21,7 +22,10 @@ export default function App() {
   const [error, setError] = useState('');
   const [locating, setLocating] = useState(false);
 
+  const userChoseRef = useRef(false);
+
   const goTo = (loc) => {
+    userChoseRef.current = true;
     setError('');
     setLocation(loc);
   };
@@ -42,24 +46,32 @@ export default function App() {
     }
   };
 
+  // À chaque ouverture : on tente de détecter la position, sans message d'erreur.
+  // En cas de refus, on garde simplement la dernière ville consultée.
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentLocation()
+      .then((loc) => {
+        // Si l'utilisateur a déjà choisi une ville entre-temps, on ne l'écrase pas
+        if (!cancelled && !userChoseRef.current) setLocation(loc);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [setLocation]);
+
+  // Bouton "Ma position"
   const handleGeolocate = () => {
     if (!navigator.geolocation) {
       setError("La géolocalisation n'est pas supportée par votre navigateur.");
       return;
     }
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async ({ coords }) => {
-        // On essaie de retrouver le nom de la ville ; sinon on garde "Ma position"
-        const name = await reverseGeocode(coords.latitude, coords.longitude).catch(() => null);
-        goTo({ latitude: coords.latitude, longitude: coords.longitude, name: name ?? 'Ma position' });
-        setLocating(false);
-      },
-      () => {
-        setError('Accès à la position refusé.');
-        setLocating(false);
-      }
-    );
+    getCurrentLocation()
+      .then(goTo)
+      .catch(() => setError('Accès à la position refusé.'))
+      .finally(() => setLocating(false));
   };
 
   const weather = data?.weather;
