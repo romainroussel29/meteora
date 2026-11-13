@@ -25,7 +25,7 @@
 
 ## 🛠️ Technologies utilisées
 
-* **Front-end :** [React](https://react.dev/) (Hooks : `useState`, `useEffect`, `useRef`)
+* **Front-end :** [React](https://react.dev/) 
 * **Build Tool :** [Vite](https://vitejs.dev/)
 * **Styling :** [Tailwind CSS](https://tailwindcss.com/)
 * **Icônes :** [Lucide React](https://lucide.dev/)
