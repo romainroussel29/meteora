@@ -1,8 +1,10 @@
 # 🌤️ Meteora - Tableau de bord météorologique
 
-**Meteora** est une application web moderne et réactive permettant de consulter la météo en temps réel ainsi que les prévisions sur 7 jours pour n'importe quelle ville dans le monde. Ce projet a été conçu dans le cadre de mon portfolio de développeur web pour démontrer ma maîtrise de React, de l'intégration d'API REST et d'une architecture logicielle propre.
+[![CI](https://github.com/romainroussel29/meteora/actions/workflows/ci.yml/badge.svg)](https://github.com/romainroussel29/meteora/actions/workflows/ci.yml)
 
-🔗 **[Voir la démo en ligne sur Vercel]https://meteora-ten-sooty.vercel.app
+**Meteora** est une application web moderne et responsive pour consulter la météo en temps réel, les prévisions heure par heure et sur 7 jours (avec détail matin / après-midi) pour n'importe quelle ville du monde. Ce projet fait partie de mon portfolio de développeur web : il montre ma maîtrise de React (hooks personnalisés, gestion d'état, accessibilité), de l'intégration d'API REST et d'une architecture propre et testée.
+
+🔗 **[Voir la démo en ligne](https://meteora-ten-sooty.vercel.app)**
 
 ---
 
@@ -10,54 +12,81 @@
 
 ![Aperçu de Meteora](./screenshot.png)
 
-
 ---
 
-## ✨ Fonctionnalités clés
+## ✨ Fonctionnalités
 
-* **Recherche intelligente avec autocomplétion :** Suggestions de villes en temps réel dès la saisie des premières lettres, optimisées avec un système de **Debounce (300ms)** pour limiter les appels réseau.
-* **Géolocalisation instantanée :** Détection automatique de la position de l'utilisateur via l'API native du navigateur (`navigator.geolocation`) pour afficher la météo locale en un clic.
-* **Météo actuelle détaillée :** Affichage de la température, des conditions climatiques avec icônes dynamiques (codes WMO), de la vitesse du vent et du taux d'humidité.
-* **Prévisions sur 7 jours :** Vue d'ensemble de la semaine à venir avec températures minimales et maximales.
-* **Interface moderne et responsive :** Design épuré (Glassmorphism) s'adaptant aussi bien aux ordinateurs qu'aux smartphones.
+### Météo
+* **Météo actuelle détaillée :** température, ressenti, conditions (codes WMO), humidité, risque de pluie, min/max du jour, heures de lever et de coucher du soleil.
+* **Vent :** boussole avec une flèche qui indique le sens du vent ; sa taille et sa couleur varient avec la vitesse. Libellé selon l'échelle de Beaufort (« Brise légère », « Vent fort »…), direction cardinale et rafales.
+* **Prévisions heure par heure (24 h) :** courbe de température lissée en SVG, probabilité de pluie et vent pour chaque heure. L'affichage s'adapte à la largeur de l'écran (pas de 1 h, 2 h ou 3 h) pour ne jamais avoir besoin de défiler horizontalement.
+* **Prévisions sur 7 jours :** barre de températures min/max à l'échelle de la semaine. **Un clic sur un jour** affiche le détail **matin / après-midi** (temps dominant, température moyenne, pluie, vent).
+* **Icônes jour / nuit et fond dynamique :** le dégradé de fond change selon la météo (soleil, pluie, neige, orage…) et passe en mode nuit après le coucher du soleil.
+
+### Recherche & navigation
+* **Autocomplétion intelligente :** suggestions de villes en temps réel avec un **debounce (300 ms)**. Chaque requête obsolète est annulée (`AbortController`).
+* **Accessible au clavier :** navigation dans les suggestions avec ↑ ↓, Entrée pour valider, Échap pour fermer (pattern ARIA *combobox*).
+* **Géolocalisation :** météo locale en un clic, avec **géocodage inverse** pour afficher le vrai nom de la ville.
+* **Villes favorites :** ajout en un clic (⭐) ; les favoris sont accessibles en haut de la page.
+* **Mémorisation :** la dernière ville consultée et les favoris sont sauvegardés dans le `localStorage`.
+
+### Qualité
+* **Requêtes robustes :** vérification des erreurs HTTP, annulation des requêtes concurrentes (une réponse lente ne peut pas écraser une plus récente), messages d'erreur clairs.
+* **Tests unitaires** avec Vitest (48 tests sur la logique métier : vent, icônes, regroupement par demi-journée, appels API simulés…).
+* **Intégration continue :** GitHub Actions lance le lint, les tests et le build à chaque push.
+* **Interface responsive :** design *glassmorphism* adapté aux ordinateurs, tablettes et smartphones.
 
 ---
 
 ## 🛠️ Technologies utilisées
 
-* **Front-end :** [React](https://react.dev/) 
+* **Front-end :** [React 19](https://react.dev/) (hooks personnalisés, `useSyncExternalStore`)
 * **Build Tool :** [Vite](https://vitejs.dev/)
-* **Styling :** [Tailwind CSS](https://tailwindcss.com/)
+* **Styling :** [Tailwind CSS 4](https://tailwindcss.com/)
 * **Icônes :** [Lucide React](https://lucide.dev/)
-* **Données & API :** [Open-Meteo API](https://open-meteo.com/) (Prévisions météo & Géocodage)
-* **Déploiement :** [Vercel](https://vercel.com/) (Intégration continue avec GitHub)
+* **Tests :** [Vitest](https://vitest.dev/)
+* **Données & API :**
+  * [Open-Meteo](https://open-meteo.com/) : prévisions météo et géocodage (sans clé API)
+  * [Nominatim / OpenStreetMap](https://nominatim.org/) : géocodage inverse
+* **CI/CD :** GitHub Actions + déploiement continu sur [Vercel](https://vercel.com/)
 
 ---
 
 ## 📂 Architecture du projet
 
-Le code est structuré de manière modulaire pour faciliter la maintenance et la lisibilité :
-
 ```text
 meteora/
+├── .github/workflows/ci.yml     # Lint + tests + build à chaque push
 ├── public/
 ├── src/
 │   ├── components/
-│   │   ├── CurrentWeather.jsx  # Carte principale de la météo actuelle
-│   │   ├── ForecastList.jsx    # Liste des prévisions sur 7 jours
-│   │   └── SearchBar.jsx       # Barre de recherche, autocomplétion et géolocalisation
+│   │   ├── CurrentWeather.jsx   # Carte de la météo actuelle (boussole du vent, détails)
+│   │   ├── HourlyForecast.jsx   # Courbe et prévisions des 24 prochaines heures
+│   │   ├── ForecastList.jsx     # Prévisions 7 jours + détail matin / après-midi au clic
+│   │   ├── SearchBar.jsx        # Recherche, autocomplétion clavier, géolocalisation
+│   │   ├── FavoritesBar.jsx     # Liste des villes favorites
+│   │   └── WindArrow.jsx        # Flèche de vent orientée et colorée selon la vitesse
+│   ├── hooks/
+│   │   ├── useWeather.js        # Chargement des données, annulation, mémorisation
+│   │   ├── useFavorites.js      # Gestion des favoris (localStorage)
+│   │   └── useHourStep.js       # Pas d'affichage horaire selon la taille d'écran
 │   ├── utils/
-│   │   └── weatherIcons.jsx    # Traduction des codes météo WMO en icônes et labels
-│   ├── App.jsx                 # Composant racine et gestion des appels API
-│   └── main.jsx                # Point d'entrée de l'application
+│   │   ├── api.js               # Appels aux API (Open-Meteo, Nominatim)
+│   │   ├── halfDays.js          # Regroupement des heures en matin / après-midi
+│   │   ├── hourly.js            # Extraction des prochaines heures
+│   │   ├── wind.js              # Direction cardinale et échelle de Beaufort
+│   │   ├── weatherIcons.jsx     # Codes météo WMO → icônes et libellés (jour / nuit)
+│   │   ├── background.js        # Dégradé de fond selon la météo
+│   │   ├── storage.js           # Accès sécurisé au localStorage
+│   │   └── __tests__/           # Tests unitaires Vitest
+│   ├── App.jsx                  # Composant racine (assemblage de l'interface)
+│   └── main.jsx                 # Point d'entrée de l'application
 └── package.json
 ```
 
 ---
 
 ## 🚀 Lancer le projet en local
-
-Pour tester ou modifier ce projet sur une machine :
 
 1. **Cloner le dépôt :**
    ```bash
@@ -77,9 +106,19 @@ Pour tester ou modifier ce projet sur une machine :
 
 4. Ouvrir `http://localhost:5173` dans le navigateur.
 
+### Autres commandes
+
+| Commande             | Description                              |
+| -------------------- | ---------------------------------------- |
+| `npm test`           | Lance les tests unitaires une fois       |
+| `npm run test:watch` | Lance les tests en mode surveillance     |
+| `npm run lint`       | Vérifie la qualité du code avec ESLint   |
+| `npm run build`      | Génère la version de production          |
+| `npm run preview`    | Prévisualise la version de production    |
+
 ---
 
 ## 👨‍💻 Auteur
 
-**Romain Roussel** – Développeur Web  
+**Romain Roussel** – Développeur Web
 * GitHub : [@romainroussel29](https://github.com/romainroussel29)
