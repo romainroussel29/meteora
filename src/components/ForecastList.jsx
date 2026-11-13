@@ -1,41 +1,106 @@
-import { Droplets } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, Droplets, X } from 'lucide-react';
 import { getWeatherInfo } from '../utils/weatherIcons';
+import { getHalfDays } from '../utils/halfDays';
+import { getCardinal, getWindInfo } from '../utils/wind';
 import WindArrow from './WindArrow';
 
 // "T12:00" évite le décalage d'un jour lié au fuseau UTC
-const formatDay = (dateStr) =>
-  new Date(`${dateStr}T12:00`).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+const toDate = (dateStr) => new Date(`${dateStr}T12:00`);
+const formatDay = (dateStr) => toDate(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+const formatLongDay = (dateStr) =>
+  toDate(dateStr).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-export default function ForecastList({ daily }) {
+function HalfDayDetail({ half }) {
+  if (half.temp == null) {
+    return (
+      <div className="bg-white/5 rounded-2xl p-4 text-sm text-slate-400">
+        {half.label} : pas de données
+      </div>
+    );
+  }
+  const { icon, label } = getWeatherInfo(half.code, 'w-12 h-12');
+  const wind = getWindInfo(half.windSpeed);
+
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
+      {icon}
+      <div>
+        <p className="text-[11px] uppercase tracking-widest text-slate-400">
+          {half.label} · {half.from}h–{half.to}h
+        </p>
+        <p className="text-2xl font-bold">{Math.round(half.temp)}°</p>
+        <p className="text-sm text-slate-300">{label}</p>
+      </div>
+      <div className="ml-auto text-sm text-right space-y-1.5">
+        <p className={`flex items-center justify-end gap-1 ${half.rain > 0 ? 'text-sky-300' : 'text-slate-400'}`}>
+          <Droplets className="w-4 h-4" /> {half.rain}%
+        </p>
+        <p className="flex items-center justify-end gap-1.5 text-slate-200">
+          <WindArrow direction={half.windDir} speed={half.windSpeed} size={16} />
+          {Math.round(half.windSpeed)} km/h {getCardinal(half.windDir)}
+        </p>
+        <p className={`text-xs ${wind.color}`}>{wind.label}</p>
+      </div>
+    </div>
+  );
+}
+
+export default function ForecastList({ daily, hourly }) {
+  const [selected, setSelected] = useState(null);
+  const detailsRef = useRef(null);
+
+  // À l'ouverture d'un jour, on fait défiler juste assez pour voir le détail
+  // ("nearest" : la page ne bouge pas s'il est déjà visible, et la semaine reste à l'écran)
+  useEffect(() => {
+    if (!selected || !detailsRef.current) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    detailsRef.current.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+  }, [selected]);
+
   const weekMin = Math.min(...daily.temperature_2m_min);
   const weekMax = Math.max(...daily.temperature_2m_max);
   const range = weekMax - weekMin || 1;
 
   return (
     <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-6 md:p-8 text-white">
-      <h3 className="text-lg font-semibold mb-6">Prévisions sur 7 jours</h3>
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-2 md:gap-3">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-6">
+        <h3 className="text-lg font-semibold">Prévisions sur 7 jours</h3>
+        <p className="text-xs text-slate-400">Cliquez sur un jour pour le détail matin / après-midi</p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-2 lg:gap-3">
         {daily.time.map((date, i) => {
-          const { icon, label } = getWeatherInfo(daily.weather_code[i], 'w-8 h-8 md:w-10 md:h-10');
+          const { icon, label } = getWeatherInfo(daily.weather_code[i], 'w-8 h-8 lg:w-10 lg:h-10');
           const tMin = daily.temperature_2m_min[i];
           const tMax = daily.temperature_2m_max[i];
           const rain = daily.precipitation_probability_max?.[i] ?? 0;
-          return (
-            <div
+          const isOpen = selected === date;
+
+          return [
+            <button
               key={date}
+              type="button"
               title={label}
-              className={`flex md:flex-col items-center gap-3 md:gap-3 rounded-2xl px-4 py-3 md:py-5 transition hover:bg-white/10 ${i === 0 ? 'bg-white/10' : 'bg-white/5'}`}
+              onClick={() => setSelected(isOpen ? null : date)}
+              aria-expanded={isOpen}
+              aria-controls="day-details"
+              className={`flex lg:flex-col items-center gap-3 rounded-2xl px-4 py-3 lg:py-5 text-left transition cursor-pointer border ${
+                isOpen
+                  ? 'bg-sky-500/20 border-sky-400/50'
+                  : `border-transparent hover:bg-white/10 ${i === 0 ? 'bg-white/10' : 'bg-white/5'}`
+              }`}
             >
-              <span className="capitalize w-20 md:w-auto text-sm font-medium text-slate-200">
+              <span className="capitalize w-24 lg:w-auto text-sm font-medium text-slate-200">
                 {i === 0 ? "Aujourd'hui" : formatDay(date)}
               </span>
               {icon}
-              <span className={`flex items-center gap-1 text-xs w-12 md:w-auto ${rain > 0 ? 'text-sky-300' : 'text-transparent'}`}>
+              <span className={`flex items-center gap-1 text-xs w-12 lg:w-auto ${rain > 0 ? 'text-sky-300' : 'text-transparent'}`}>
                 <Droplets className="w-3 h-3" />{rain}%
               </span>
 
-              <div className="flex items-center gap-2 flex-1 md:w-full text-sm font-semibold">
-                <span className="text-slate-400 w-8 text-right md:text-left">{Math.round(tMin)}°</span>
+              <div className="flex items-center gap-2 flex-1 lg:w-full text-sm font-semibold">
+                <span className="text-slate-400 w-8 text-right lg:text-left">{Math.round(tMin)}°</span>
                 <div className="relative flex-1 h-1.5 rounded-full bg-white/10">
                   <div
                     className="absolute inset-y-0 rounded-full bg-gradient-to-r from-sky-400 to-amber-400"
@@ -48,16 +113,40 @@ export default function ForecastList({ daily }) {
                 <span className="w-8 text-right">{Math.round(tMax)}°</span>
               </div>
 
-              <span className="flex items-center gap-1.5 text-xs text-slate-300">
-                <WindArrow
-                  direction={daily.wind_direction_10m_dominant[i]}
-                  speed={daily.wind_speed_10m_max[i]}
-                  size={14}
-                />
-                {Math.round(daily.wind_speed_10m_max[i])} km/h
-              </span>
-            </div>
-          );
+              <ChevronDown
+                className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                aria-hidden="true"
+              />
+            </button>,
+
+            // Le détail suit la carte dans le DOM (donc juste dessous sur mobile) ;
+            // sur grand écran, "order-last" le place sous la rangée des 7 jours.
+            isOpen && (
+              <div
+                key={`${date}-details`}
+                id="day-details"
+                ref={detailsRef}
+                className="scroll-mb-6 col-span-full lg:order-last mt-1 lg:mt-2 rounded-2xl bg-white/5 border border-white/10 p-4 md:p-5"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <p className="font-semibold capitalize">{formatLongDay(date)}</p>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(null)}
+                    aria-label="Fermer le détail"
+                    className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {getHalfDays(hourly, date).map((half) => (
+                    <HalfDayDetail key={half.key} half={half} />
+                  ))}
+                </div>
+              </div>
+            ),
+          ];
         })}
       </div>
     </section>
