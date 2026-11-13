@@ -52,7 +52,7 @@ export default function SearchBar({ city, setCity, onSearch, onSelectSuggestion,
   };
 
   return (
-    <div ref={wrapperRef} className="relative mb-6">
+    <div ref={wrapperRef} className="relative">
       <form onSubmit={(e) => { setShowDropdown(false); onSearch(e); }} className="flex gap-2">
         <div className="relative flex-1">
           <input
