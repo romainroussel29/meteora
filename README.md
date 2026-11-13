@@ -26,13 +26,13 @@
 ### Recherche & navigation
 * **Autocomplétion intelligente :** suggestions de villes en temps réel avec un **debounce (300 ms)**. Chaque requête obsolète est annulée (`AbortController`).
 * **Accessible au clavier :** navigation dans les suggestions avec ↑ ↓, Entrée pour valider, Échap pour fermer (pattern ARIA *combobox*).
-* **Géolocalisation :** météo locale en un clic, avec **géocodage inverse** pour afficher le vrai nom de la ville.
+* **Géolocalisation automatique :** à chaque ouverture, l'application affiche la météo du lieu où l'on se trouve (si l'utilisateur l'autorise), avec **géocodage inverse** pour afficher le vrai nom de la ville. En cas de refus, elle rouvre la dernière ville consultée. Un bouton permet aussi de se relocaliser à tout moment.
 * **Villes favorites :** ajout en un clic (⭐) ; les favoris sont accessibles en haut de la page.
 * **Mémorisation :** la dernière ville consultée et les favoris sont sauvegardés dans le `localStorage`.
 
 ### Qualité
 * **Requêtes robustes :** vérification des erreurs HTTP, annulation des requêtes concurrentes (une réponse lente ne peut pas écraser une plus récente), messages d'erreur clairs.
-* **Tests unitaires** avec Vitest (48 tests sur la logique métier : vent, icônes, regroupement par demi-journée, appels API simulés…).
+* **Tests unitaires** avec Vitest (52 tests sur la logique métier : vent, icônes, regroupement par demi-journée, géolocalisation et appels API simulés…).
 * **Intégration continue :** GitHub Actions lance le lint, les tests et le build à chaque push.
 * **Interface responsive :** design *glassmorphism* adapté aux ordinateurs, tablettes et smartphones.
 
@@ -77,6 +77,7 @@ meteora/
 │   │   ├── wind.js              # Direction cardinale et échelle de Beaufort
 │   │   ├── weatherIcons.jsx     # Codes météo WMO → icônes et libellés (jour / nuit)
 │   │   ├── background.js        # Dégradé de fond selon la météo
+│   │   ├── geolocation.js       # Position de l'utilisateur + nom de la ville
 │   │   ├── storage.js           # Accès sécurisé au localStorage
 │   │   └── __tests__/           # Tests unitaires Vitest
 │   ├── App.jsx                  # Composant racine (assemblage de l'interface)
