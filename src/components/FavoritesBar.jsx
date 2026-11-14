@@ -5,14 +5,14 @@ export default function FavoritesBar({ favorites, current, onSelect, onRemove })
   if (favorites.length === 0) return null;
 
   return (
-    <nav aria-label="Villes favorites" className="flex flex-wrap items-center gap-2 mb-6">
-      <Star className="w-4 h-4 text-amber-400 fill-amber-400" aria-hidden="true" />
+    <nav aria-label="Villes favorites" className="flex items-center gap-2 mb-4 -mx-3 px-3 md:mx-0 md:px-0 overflow-x-auto scrollbar-none md:flex-wrap">
+      <Star className="w-4 h-4 shrink-0 text-amber-400 fill-amber-400" aria-hidden="true" />
       {favorites.map((fav) => {
         const active = sameLocation(fav, current);
         return (
           <span
             key={`${fav.latitude},${fav.longitude}`}
-            className={`group flex items-center rounded-full border text-sm transition ${
+            className={`group shrink-0 flex items-center rounded-full border text-sm transition ${
               active ? 'bg-sky-500/30 border-sky-400/50 text-white' : 'bg-white/10 border-white/15 text-slate-200 hover:bg-white/20'
             }`}
           >
