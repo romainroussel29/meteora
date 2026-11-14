@@ -9,25 +9,30 @@ const RESISTANCE = 0.5; // l'indicateur descend moins vite que le doigt, comme s
  * "Tirer pour actualiser" : en haut de la page, glisser le doigt vers le bas
  * fait descendre une icône qui tourne ; au-delà du seuil, relâcher actualise.
  */
-export default function PullToRefresh({ onRefresh, refreshing }) {
+interface PullToRefreshProps {
+  onRefresh: () => void;
+  refreshing: boolean;
+}
+
+export default function PullToRefresh({ onRefresh, refreshing }: PullToRefreshProps) {
   const [pull, setPull] = useState(0);
-  const gesture = useRef(null); // { x, y, locked }
+  const gesture = useRef<{ x: number; y: number; locked: boolean } | null>(null);
   const pullRef = useRef(0);
 
   useEffect(() => {
-    const setPullValue = (value) => {
+    const setPullValue = (value: number) => {
       pullRef.current = value;
       setPull(value);
     };
 
-    const onStart = (e) => {
+    const onStart = (e: TouchEvent) => {
       // Seulement si on est tout en haut de la page et sur un seul doigt
       gesture.current = window.scrollY <= 0 && e.touches.length === 1
         ? { x: e.touches[0].clientX, y: e.touches[0].clientY, locked: false }
         : null;
     };
 
-    const onMove = (e) => {
+    const onMove = (e: TouchEvent) => {
       const g = gesture.current;
       if (!g) return;
       const dx = e.touches[0].clientX - g.x;

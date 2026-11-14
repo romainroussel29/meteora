@@ -1,14 +1,14 @@
 // localStorage peut être indisponible (navigation privée, quota…) : on ne plante jamais
-export function loadJson(key, fallback) {
+export function loadJson<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
+    return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
   }
 }
 
-export function saveJson(key, value) {
+export function saveJson(key: string, value: unknown): void {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch {

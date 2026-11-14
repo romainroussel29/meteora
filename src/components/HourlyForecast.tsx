@@ -1,5 +1,6 @@
-import { useId } from 'react';
-import { Thermometer, Droplets, Wind } from 'lucide-react';
+import { useId, type CSSProperties } from 'react';
+import type { HourlyWeather } from '../types/weather';
+import { Thermometer, Droplet, Droplets, Wind } from 'lucide-react';
 import { getWeatherInfo } from '../utils/weatherIcons';
 import { getUpcomingHours } from '../utils/hourly';
 import WindArrow from './WindArrow';
@@ -7,7 +8,9 @@ import WindArrow from './WindArrow';
 const HOURS = 24;
 
 // Courbe lissée passant par chaque point (bézier aux milieux)
-const smoothPath = (pts) =>
+type Point = [number, number];
+
+const smoothPath = (pts: Point[]): string =>
   pts.reduce((d, [x, y], i) => {
     if (i === 0) return `M ${x} ${y}`;
     const [px, py] = pts[i - 1];
@@ -15,7 +18,12 @@ const smoothPath = (pts) =>
     return `${d} C ${cx} ${py}, ${cx} ${y}, ${x} ${y}`;
   }, '');
 
-export default function HourlyForecast({ hourly, currentTime }) {
+interface HourlyForecastProps {
+  hourly: HourlyWeather;
+  currentTime: string;
+}
+
+export default function HourlyForecast({ hourly, currentTime }: HourlyForecastProps) {
   const gradientId = useId();
   const hours = getUpcomingHours(hourly, currentTime, { hours: HOURS });
 
@@ -24,10 +32,10 @@ export default function HourlyForecast({ hourly, currentTime }) {
   const min = Math.min(...temps);
   const max = Math.max(...temps);
   // y en % de la zone du graphique : 35 % (plus chaud) → 85 % (plus froid)
-  const yOf = (t) => 35 + (1 - (t - min) / (max - min || 1)) * 50;
+  const yOf = (t: number) => 35 + (1 - (t - min) / (max - min || 1)) * 50;
 
-  const points = hours.map((h, i) => [i + 0.5, yOf(h.temp)]);
-  const edged = [[0, points[0][1]], ...points, [n, points[n - 1][1]]];
+  const points: Point[] = hours.map((h, i) => [i + 0.5, yOf(h.temp)]);
+  const edged: Point[] = [[0, points[0][1]], ...points, [n, points[n - 1][1]]];
   const line = smoothPath(edged);
   const area = `${line} L ${n} 100 L 0 100 Z`;
 
@@ -52,7 +60,7 @@ export default function HourlyForecast({ hourly, currentTime }) {
       <div className="-mx-4 md:mx-0 overflow-x-auto scrollbar-none overscroll-x-contain lg:overflow-visible [mask-image:linear-gradient(to_right,black_85%,transparent)] lg:[mask-image:none]">
         <div
           className="relative px-4 md:px-0 min-w-[calc(var(--cols)*3.25rem+2rem)] md:min-w-[calc(var(--cols)*3.25rem)] lg:min-w-0"
-          style={{ '--cols': n }}
+          style={{ '--cols': n } as CSSProperties}
         >
           <div className="relative">
             {/* Surlignage de l'heure actuelle */}
@@ -119,14 +127,23 @@ export default function HourlyForecast({ hourly, currentTime }) {
             <div className="relative grid text-center" style={cols}>
               {hours.map((h) => (
                 <div key={h.time} className="flex flex-col items-center gap-1 pb-2">
-                  <div className="h-7 w-full flex flex-col items-center justify-end gap-0.5">
-                    <span className={`text-[10px] ${h.rain > 0 ? 'text-sky-300' : 'text-transparent'}`}>
-                      {h.rain}%
-                    </span>
-                    <div
-                      className="w-1.5 rounded-full bg-sky-400/80"
-                      style={{ height: `${Math.max(h.rain * 0.12, 2)}px`, opacity: h.rain > 0 ? 1 : 0.2 }}
-                    />
+                  {/* Gouttelette seulement s'il y a un risque de pluie : plus grande et plus marquée quand il augmente */}
+                  <div className="h-8 w-full flex flex-col items-center justify-end gap-0.5">
+                    {h.rain > 0 && (
+                      <>
+                        <span className="text-[11px] text-sky-300">{h.rain}%</span>
+                        <Droplet
+                          aria-hidden="true"
+                          className="text-sky-300 fill-sky-400"
+                          strokeWidth={1.5}
+                          style={{
+                            width: 9 + h.rain * 0.05,
+                            height: 9 + h.rain * 0.05,
+                            opacity: 0.45 + h.rain / 180,
+                          }}
+                        />
+                      </>
+                    )}
                   </div>
                   <div className="h-5 flex items-center justify-center">
                     <WindArrow direction={h.windDir} speed={h.windSpeed} size={14} />

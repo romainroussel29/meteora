@@ -1,63 +1,78 @@
 // Pseudo-aléatoire déterministe : mêmes positions à chaque rendu (pas de "saut" visuel)
-const rand = (i, seed) => {
+import type { CSSProperties } from 'react';
+import type { WeatherScene } from '../types/weather';
+
+const rand = (i: number, seed: number): number => {
   const x = Math.sin(i * 12.9898 + seed * 78.233) * 43758.5453;
   return x - Math.floor(x);
 };
-const make = (count, fn) => Array.from({ length: count }, (_, i) => fn(i));
+const make = <T,>(count: number, fn: (i: number) => T): T[] => Array.from({ length: count }, (_, i) => fn(i));
 
 // Particules calculées une seule fois au chargement du module
-const STARS = make(60, (i) => ({
+const STARS = make(40, (i) => ({
   left: `${rand(i, 1) * 100}%`,
-  top: `${rand(i, 2) * 70}%`,
+  top: `${rand(i, 2) * 80}%`,
   size: 1 + rand(i, 3) * 1.5,
   duration: `${2 + rand(i, 4) * 4}s`,
   delay: `${-rand(i, 5) * 6}s`,
 }));
-const DROPS = make(90, (i) => ({
-  left: `${rand(i, 6) * 110}%`,
-  height: `${8 + rand(i, 7) * 10}vh`,
-  duration: `${0.6 + rand(i, 8) * 0.5}s`,
+const DROPS = make(36, (i) => ({
+  left: `${rand(i, 6) * 105}%`,
+  height: `${1.5 + rand(i, 7) * 1.5}rem`,
+  duration: `${1.1 + rand(i, 8) * 0.7}s`,
   delay: `${-rand(i, 9) * 2}s`,
 }));
-const FLAKES = make(55, (i) => ({
+const FLAKES = make(30, (i) => ({
   left: `${rand(i, 10) * 100}%`,
-  size: 2 + rand(i, 11) * 4,
-  opacity: 0.4 + rand(i, 12) * 0.5,
-  duration: `${8 + rand(i, 13) * 10}s`,
-  delay: `${-rand(i, 14) * 18}s`,
+  size: 2 + rand(i, 11) * 2.5,
+  opacity: 0.3 + rand(i, 12) * 0.4,
+  duration: `${6 + rand(i, 13) * 6}s`,
+  delay: `${-rand(i, 14) * 12}s`,
 }));
-const CLOUDS = make(7, (i) => ({
-  top: `${rand(i, 15) * 60}%`,
-  width: `${30 + rand(i, 16) * 30}vmax`,
-  height: `${10 + rand(i, 17) * 8}vmax`,
+const CLOUDS = make(5, (i) => ({
+  top: `${rand(i, 15) * 50}%`,
+  width: `${14 + rand(i, 16) * 10}rem`,
+  height: `${4 + rand(i, 17) * 3}rem`,
   duration: `${70 + rand(i, 18) * 60}s`,
   delay: `${-rand(i, 19) * 130}s`,
 }));
 
 // Composition de chaque scène
-const SCENES = {
+interface SceneConfig {
+  sun?: boolean;
+  moon?: boolean;
+  stars?: number;
+  clouds?: number;
+  cloudAlpha?: number;
+  fog?: boolean;
+  drops?: number;
+  flakes?: number;
+  lightning?: boolean;
+}
+
+const SCENES: Record<WeatherScene, SceneConfig> = {
   'clear-day': { sun: true },
-  'partly-day': { sun: true, clouds: 3 },
-  'clear-night': { moon: true, stars: 60 },
-  'partly-night': { moon: true, stars: 35, clouds: 3 },
-  cloudy: { clouds: 7, cloudAlpha: 0.1 },
-  fog: { fog: true, clouds: 4 },
-  drizzle: { clouds: 5, cloudAlpha: 0.07, drops: 30 },
-  rain: { clouds: 6, cloudAlpha: 0.07, drops: 75 },
-  storm: { clouds: 6, cloudAlpha: 0.06, drops: 90, lightning: true },
-  snow: { clouds: 5, cloudAlpha: 0.1, flakes: 55 },
+  'partly-day': { sun: true, clouds: 2 },
+  'clear-night': { moon: true, stars: 40 },
+  'partly-night': { moon: true, stars: 25, clouds: 2 },
+  cloudy: { clouds: 5, cloudAlpha: 0.08 },
+  fog: { fog: true, clouds: 3 },
+  drizzle: { clouds: 3, cloudAlpha: 0.06, drops: 12 },
+  rain: { clouds: 4, cloudAlpha: 0.06, drops: 26 },
+  storm: { clouds: 4, cloudAlpha: 0.05, drops: 36, lightning: true },
+  snow: { clouds: 3, cloudAlpha: 0.08, flakes: 30 },
 };
 
 /**
- * Fond animé (fixe, derrière le contenu) qui illustre la météo actuelle.
+ * Fond animé discret, limité à un bandeau en haut de la page, qui illustre la météo actuelle.
  * Purement décoratif : masqué aux lecteurs d'écran et sans interaction.
  */
-export default function WeatherBackdrop({ scene }) {
-  const config = SCENES[scene];
+export default function WeatherBackdrop({ scene }: { scene: WeatherScene | null }) {
+  const config = scene ? SCENES[scene] : null;
   if (!config) return null;
 
   return (
-    <div aria-hidden="true" className="pointer-events-none fixed inset-0 overflow-hidden">
+    <div aria-hidden="true" className="wx-band pointer-events-none absolute inset-x-0 top-0 overflow-hidden">
       {config.sun && <div className="wx-sun" />}
       {config.moon && <div className="wx-moon" />}
 
@@ -80,7 +95,7 @@ export default function WeatherBackdrop({ scene }) {
             animationDuration: c.duration,
             animationDelay: c.delay,
             '--wx-cloud-alpha': config.cloudAlpha,
-          }}
+          } as CSSProperties}
         />
       ))}
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 /**
@@ -7,9 +7,15 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
  * - à la souris sur ordinateur : glisser-déposer (clic maintenu) ou flèches ◀ ▶,
  * - un fondu sur les bords indique qu'il reste du contenu à voir.
  */
-export default function HScroll({ children, label }) {
-  const ref = useRef(null);
-  const drag = useRef(null);
+interface HScrollProps {
+  children: ReactNode;
+  /** Nom accessible de la zone défilable */
+  label: string;
+}
+
+export default function HScroll({ children, label }: HScrollProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x: number; left: number } | null>(null);
   const [edges, setEdges] = useState({ start: true, end: true });
 
   const updateEdges = useCallback(() => {
@@ -23,25 +29,27 @@ export default function HScroll({ children, label }) {
 
   // Recalcule quand la taille change (le ResizeObserver se déclenche aussi à l'initialisation)
   useEffect(() => {
+    if (!ref.current) return;
     const observer = new ResizeObserver(updateEdges);
     observer.observe(ref.current);
     return () => observer.disconnect();
   }, [updateEdges]);
 
-  const onPointerDown = (e) => {
-    if (e.pointerType !== 'mouse') return; // au doigt, le défilement natif suffit
+  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse' || !ref.current) return; // au doigt, le défilement natif suffit
     drag.current = { x: e.clientX, left: ref.current.scrollLeft };
   };
-  const onPointerMove = (e) => {
-    if (!drag.current) return;
+  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (!drag.current || !ref.current) return;
     ref.current.scrollLeft = drag.current.left - (e.clientX - drag.current.x);
   };
   const endDrag = () => {
     drag.current = null;
   };
 
-  const scrollByPage = (direction) => {
+  const scrollByPage = (direction: 1 | -1) => {
     const el = ref.current;
+    if (!el) return;
     el.scrollBy({ left: direction * el.clientWidth * 0.8, behavior: 'smooth' });
   };
 

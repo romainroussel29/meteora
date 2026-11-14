@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import SearchBar from './components/SearchBar';
 import CurrentWeather from './components/CurrentWeather';
@@ -7,21 +7,25 @@ import ForecastList from './components/ForecastList';
 import FavoritesBar from './components/FavoritesBar';
 import WeatherBackdrop from './components/WeatherBackdrop';
 import PullToRefresh from './components/PullToRefresh';
+import RadarPanel from './components/RadarPanel';
 import useWeather from './hooks/useWeather';
 import useFavorites from './hooks/useFavorites';
 import useOnlineStatus from './hooks/useOnlineStatus';
+import useFavoritesWeather from './hooks/useFavoritesWeather';
+import type { Location, Place, WeatherScene } from './types/weather';
+import { getRainAlert } from './utils/rain';
 import { searchCities } from './utils/api';
 import { getCurrentLocation } from './utils/geolocation';
-import { getBackground, getWeatherScene } from './utils/background';
+import { getBackground, getWeatherScene, isTwilight } from './utils/background';
 
 // Aperçu des fonds animés : ajouter ?meteo=pluie (ou soleil, nuit, nuages, brouillard, orage, neige…) à l'URL
-const PREVIEW_SCENES = {
+const PREVIEW_SCENES: Record<string, WeatherScene> = {
   soleil: 'clear-day', nuit: 'clear-night', eclaircies: 'partly-day', nuages: 'cloudy',
   brouillard: 'fog', bruine: 'drizzle', pluie: 'rain', orage: 'storm', neige: 'snow',
 };
-const previewScene = PREVIEW_SCENES[new URLSearchParams(window.location.search).get('meteo')];
+const previewScene: WeatherScene | undefined = PREVIEW_SCENES[new URLSearchParams(window.location.search).get('meteo') ?? ''];
 
-const toLocation = (place) => ({
+const toLocation = (place: Place): Location => ({
   latitude: place.latitude,
   longitude: place.longitude,
   name: [place.name, place.country].filter(Boolean).join(', '),
@@ -31,19 +35,18 @@ export default function App() {
   const { data, location, setLocation, loading, refreshing, refresh, error: weatherError } = useWeather();
   const { favorites, isFavorite, toggleFavorite, removeFavorite } = useFavorites();
   const online = useOnlineStatus();
+  const favoritesWeather = useFavoritesWeather(favorites, data?.updatedAt);
   const [error, setError] = useState('');
   const [locating, setLocating] = useState(false);
+  const [radarOpen, setRadarOpen] = useState(false);
 
-  const userChoseRef = useRef(false);
-
-  const goTo = (loc) => {
-    userChoseRef.current = true;
+  const goTo = (loc: Location) => {
     setError('');
     setLocation(loc);
   };
 
   // Recherche via le bouton "Chercher" quand aucune suggestion n'est affichée
-  const handleSearch = async (query) => {
+  const handleSearch = async (query: string): Promise<boolean> => {
     try {
       const [place] = await searchCities(query, { count: 1 });
       if (!place) {
@@ -58,22 +61,8 @@ export default function App() {
     }
   };
 
-  // À chaque ouverture : on tente de détecter la position, sans message d'erreur.
-  // En cas de refus, on garde simplement la dernière ville consultée.
-  useEffect(() => {
-    let cancelled = false;
-    getCurrentLocation()
-      .then((loc) => {
-        // Si l'utilisateur a déjà choisi une ville entre-temps, on ne l'écrase pas
-        if (!cancelled && !userChoseRef.current) setLocation(loc);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [setLocation]);
-
-  // Bouton "Ma position"
+  // Bouton "Ma position" : la position n'est demandée que si l'utilisateur le souhaite
+  // (aucune demande d'autorisation à l'ouverture de l'application)
   const handleGeolocate = () => {
     if (!navigator.geolocation) {
       setError("La géolocalisation n'est pas supportée par votre navigateur.");
@@ -90,7 +79,8 @@ export default function App() {
   const busy = loading || locating;
   const shownError = error || weatherError;
   const isDay = weather?.current.is_day !== 0;
-  const background = getBackground(weather?.current.weather_code, isDay);
+  const twilight = weather ? isTwilight(weather.current.time, weather.daily.sunrise[0], weather.daily.sunset[0]) : false;
+  const background = getBackground(weather?.current.weather_code, isDay, twilight);
   const scene = previewScene ?? getWeatherScene(weather?.current.weather_code, isDay);
 
   return (
@@ -106,7 +96,7 @@ export default function App() {
           <div className="w-full md:max-w-md">
             <SearchBar
               onSearch={handleSearch}
-              onSelectSuggestion={(place) => goTo(toLocation(place))}
+              onSelectSuggestion={(place: Place) => goTo(toLocation(place))}
               onGeolocate={handleGeolocate}
               loading={busy}
             />
@@ -115,6 +105,7 @@ export default function App() {
 
         <FavoritesBar
           favorites={favorites}
+          weatherByKey={favoritesWeather}
           current={location}
           onSelect={goTo}
           onRemove={removeFavorite}
@@ -162,8 +153,11 @@ export default function App() {
             <CurrentWeather
               data={weather.current}
               cityName={data.location.name}
+              rainAlert={getRainAlert(weather.minutely_15, weather.current.time)}
               isFavorite={isFavorite(data.location)}
               onToggleFavorite={() => toggleFavorite(data.location)}
+              radarOpen={radarOpen}
+              onToggleRadar={() => setRadarOpen((o) => !o)}
               today={{
                 min: weather.daily.temperature_2m_min[0],
                 max: weather.daily.temperature_2m_max[0],
@@ -172,6 +166,13 @@ export default function App() {
                 sunset: weather.daily.sunset[0],
               }}
             />
+            {radarOpen && (
+              <RadarPanel
+                latitude={data.location.latitude}
+                longitude={data.location.longitude}
+                onClose={() => setRadarOpen(false)}
+              />
+            )}
             <HourlyForecast hourly={weather.hourly} currentTime={weather.current.time} />
             <ForecastList daily={weather.daily} hourly={weather.hourly} />
           </main>

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react';
 
-const subscribe = (callback) => {
+const subscribe = (callback: () => void) => {
   window.addEventListener('online', callback);
   window.addEventListener('offline', callback);
   return () => {
@@ -10,6 +10,6 @@ const subscribe = (callback) => {
 };
 
 // true si le navigateur est connecté à Internet
-export default function useOnlineStatus() {
+export default function useOnlineStatus(): boolean {
   return useSyncExternalStore(subscribe, () => navigator.onLine, () => true);
 }

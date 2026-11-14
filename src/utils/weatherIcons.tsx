@@ -1,6 +1,12 @@
 import { Sun, Moon, Cloud, CloudSun, CloudMoon, CloudRain, CloudSnow, CloudLightning, CloudFog, CloudDrizzle } from 'lucide-react';
+import type { ReactElement } from 'react';
 
-export const getWeatherInfo = (code, className = "w-8 h-8", isDay = true) => {
+export interface WeatherInfo {
+  label: string;
+  icon: ReactElement<{ className?: string }>;
+}
+
+export const getWeatherInfo = (code: number, className = "w-8 h-8", isDay = true): WeatherInfo => {
   if (code === 0) return isDay
     ? { label: "Ciel dégagé", icon: <Sun className={`${className} text-amber-400`} /> }
     : { label: "Ciel dégagé", icon: <Moon className={`${className} text-indigo-200`} /> };

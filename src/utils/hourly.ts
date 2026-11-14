@@ -1,5 +1,7 @@
+import type { HourEntry, HourlyWeather } from '../types/weather';
+
 // Données d'une heure donnée (index dans les tableaux "hourly" de l'API)
-const toEntry = (hourly, i) => ({
+const toEntry = (hourly: HourlyWeather, i: number): HourEntry => ({
   time: hourly.time[i],
   temp: hourly.temperature_2m[i],
   code: hourly.weather_code[i],
@@ -13,10 +15,14 @@ const toEntry = (hourly, i) => ({
  * Extrait les prochaines heures à partir de l'heure courante de la ville.
  * Les heures de l'API sont dans le fuseau local de la ville : on compare "YYYY-MM-DDTHH".
  */
-export function getUpcomingHours(hourly, currentTime, { hours = 24, step = 1 } = {}) {
+export function getUpcomingHours(
+  hourly: HourlyWeather,
+  currentTime: string,
+  { hours = 24, step = 1 }: { hours?: number; step?: number } = {}
+): HourEntry[] {
   const found = hourly.time.findIndex((t) => t.slice(0, 13) === currentTime.slice(0, 13));
   const start = Math.max(found, 0);
-  const result = [];
+  const result: HourEntry[] = [];
   for (let i = start; i < start + hours && i < hourly.time.length; i += step) {
     result.push(toEntry(hourly, i));
   }
@@ -26,8 +32,8 @@ export function getUpcomingHours(hourly, currentTime, { hours = 24, step = 1 } =
 /**
  * Heures d'une journée ("YYYY-MM-DD") avec un pas donné : 0h, 2h, 4h… 22h par défaut.
  */
-export function getDayHours(hourly, date, step = 2) {
-  const result = [];
+export function getDayHours(hourly: HourlyWeather, date: string, step = 2): HourEntry[] {
+  const result: HourEntry[] = [];
   hourly.time.forEach((t, i) => {
     if (t.startsWith(date) && Number(t.slice(11, 13)) % step === 0) result.push(toEntry(hourly, i));
   });

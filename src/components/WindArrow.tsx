@@ -3,7 +3,13 @@ import { getCardinal, getWindInfo } from '../utils/wind';
 
 // La flèche pointe dans le sens où souffle le vent (direction d'origine + 180°).
 // Sa taille et sa couleur augmentent avec la vitesse.
-export default function WindArrow({ direction, speed, size = 24 }) {
+interface WindArrowProps {
+  direction: number;
+  speed: number;
+  size?: number;
+}
+
+export default function WindArrow({ direction, speed, size = 24 }: WindArrowProps) {
   const { color } = getWindInfo(speed);
   const scale = Math.min(1 + speed / 60, 1.6);
 

@@ -1,6 +1,7 @@
+import type { Location } from '../types/weather';
 import { reverseGeocode } from './api';
 
-const OPTIONS = {
+const OPTIONS: PositionOptions = {
   timeout: 10000,
   maximumAge: 10 * 60 * 1000, // réutilise une position de moins de 10 min : ouverture plus rapide
 };
@@ -9,7 +10,7 @@ const OPTIONS = {
  * Récupère la position de l'utilisateur et le nom de la ville correspondante.
  * Rejette si la géolocalisation est indisponible ou refusée.
  */
-export function getCurrentLocation() {
+export function getCurrentLocation(): Promise<Location> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error('unsupported'));

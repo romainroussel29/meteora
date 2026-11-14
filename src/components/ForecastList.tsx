@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Droplets, X } from 'lucide-react';
+import type { DailyWeather, HourEntry, HourlyWeather } from '../types/weather';
 import { getWeatherInfo } from '../utils/weatherIcons';
 import { getDayHours } from '../utils/hourly';
 import { getCardinal } from '../utils/wind';
@@ -7,12 +8,12 @@ import HScroll from './HScroll';
 import WindArrow from './WindArrow';
 
 // "T12:00" évite le décalage d'un jour lié au fuseau UTC
-const toDate = (dateStr) => new Date(`${dateStr}T12:00`);
-const formatDay = (dateStr) => toDate(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
-const formatLongDay = (dateStr) =>
+const toDate = (dateStr: string) => new Date(`${dateStr}T12:00`);
+const formatDay = (dateStr: string) => toDate(dateStr).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
+const formatLongDay = (dateStr: string) =>
   toDate(dateStr).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-function HourSlot({ slot }) {
+function HourSlot({ slot }: { slot: HourEntry }) {
   const { icon, label } = getWeatherInfo(slot.code, 'w-7 h-7', slot.isDay);
   return (
     <div
@@ -22,7 +23,7 @@ function HourSlot({ slot }) {
       <span className="text-xs text-slate-300">{slot.time.slice(11, 13)}h</span>
       {icon}
       <span className="font-semibold">{Math.round(slot.temp)}°</span>
-      <span className={`flex items-center gap-0.5 text-[10px] ${slot.rain > 0 ? 'text-sky-300' : 'text-transparent'}`}>
+      <span className={`flex items-center gap-0.5 text-[11px] ${slot.rain > 0 ? 'text-sky-300' : 'text-transparent'}`}>
         <Droplets className="w-2.5 h-2.5" />{slot.rain}%
       </span>
       <span className="flex items-center gap-1 text-[11px] text-slate-300" title={`Vent du ${getCardinal(slot.windDir)}`}>
@@ -33,9 +34,14 @@ function HourSlot({ slot }) {
   );
 }
 
-export default function ForecastList({ daily, hourly }) {
-  const [selected, setSelected] = useState(null);
-  const detailsRef = useRef(null);
+interface ForecastListProps {
+  daily: DailyWeather;
+  hourly: HourlyWeather;
+}
+
+export default function ForecastList({ daily, hourly }: ForecastListProps) {
+  const [selected, setSelected] = useState<string | null>(null);
+  const detailsRef = useRef<HTMLDivElement>(null);
 
   // À l'ouverture d'un jour, on fait défiler juste assez pour voir le détail
   // ("nearest" : la page ne bouge pas s'il est déjà visible, et la semaine reste à l'écran)
@@ -53,7 +59,7 @@ export default function ForecastList({ daily, hourly }) {
     <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-4 md:p-6 text-white">
       <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
         <h3 className="font-semibold">Prévisions sur 7 jours</h3>
-        <p className="text-xs text-slate-400">Touchez un jour pour le détail toutes les 2 h</p>
+        <p className="text-xs text-slate-300">Touchez un jour pour le détail toutes les 2 h</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-1.5 lg:gap-3">
@@ -80,6 +86,8 @@ export default function ForecastList({ daily, hourly }) {
             >
               <span className="capitalize w-20 lg:w-auto text-sm font-medium text-slate-200">
                 {i === 0 ? "Aujourd'hui" : formatDay(date)}
+                {/* Précisions pour les lecteurs d'écran (le texte visible reste inclus dans le nom du bouton) */}
+                <span className="sr-only"> ({formatLongDay(date)}, {label})</span>
               </span>
               {icon}
               <span className={`flex items-center gap-1 text-xs w-12 lg:w-auto ${rain > 0 ? 'text-sky-300' : 'text-transparent'}`}>
@@ -87,7 +95,7 @@ export default function ForecastList({ daily, hourly }) {
               </span>
 
               <div className="flex items-center gap-2 flex-1 lg:w-full text-sm font-semibold">
-                <span className="text-slate-400 w-8 text-right lg:text-left">{Math.round(tMin)}°</span>
+                <span className="text-slate-300 w-8 text-right lg:text-left">{Math.round(tMin)}°</span>
                 <div className="relative flex-1 h-1.5 rounded-full bg-white/10">
                   <div
                     className="absolute inset-y-0 rounded-full bg-gradient-to-r from-sky-400 to-amber-400"
@@ -101,7 +109,7 @@ export default function ForecastList({ daily, hourly }) {
               </div>
 
               <ChevronDown
-                className={`w-4 h-4 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                className={`w-4 h-4 text-slate-300 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                 aria-hidden="true"
               />
             </button>,
@@ -116,12 +124,12 @@ export default function ForecastList({ daily, hourly }) {
                 className="scroll-mb-6 col-span-full lg:order-last my-1 lg:mt-2 rounded-2xl bg-white/5 border border-white/10 p-3 md:p-5"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <p className="font-semibold capitalize">{formatLongDay(date)}</p>
+                  <p className="font-semibold first-letter:uppercase">{formatLongDay(date)}</p>
                   <button
                     type="button"
                     onClick={() => setSelected(null)}
                     aria-label="Fermer le détail"
-                    className="p-1 rounded-full text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
+                    className="p-1 rounded-full text-slate-300 hover:text-white hover:bg-white/10 cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -133,7 +141,7 @@ export default function ForecastList({ daily, hourly }) {
                     ))}
                   </div>
                 </HScroll>
-                <p className="mt-2 text-[11px] text-slate-400">Vent en km/h · glissez pour voir toute la journée</p>
+                <p className="mt-2 text-[11px] text-slate-300">Vent en km/h · glissez pour voir toute la journée</p>
               </div>
             ),
           ];

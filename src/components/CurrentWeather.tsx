@@ -1,4 +1,7 @@
-import { Droplets, Thermometer, Wind, Sunrise, Sunset, Star, CloudRain } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { Thermometer, Sunrise, Sunset, Star, CloudRain, Umbrella, Radar } from 'lucide-react';
+import type { CurrentWeather as CurrentData } from '../types/weather';
+import type { RainAlert } from '../utils/rain';
 import { getWeatherInfo } from '../utils/weatherIcons';
 import { getCardinal, getWindInfo } from '../utils/wind';
 import WindArrow from './WindArrow';
@@ -11,20 +14,55 @@ const COMPASS = [
 ];
 
 // Petite tuile compacte : icône, valeur, libellé
-function Stat({ icon, label, value }) {
+interface StatProps {
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+}
+
+function Stat({ icon, label, value }: StatProps) {
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl px-2 py-2.5 flex flex-col items-center text-center gap-1">
       {icon}
       <p className="text-sm md:text-base font-semibold leading-none">{value}</p>
-      <p className="text-[10px] md:text-xs text-slate-400 leading-tight">{label}</p>
+      <p className="text-[11px] md:text-xs text-slate-300 leading-tight">{label}</p>
     </div>
   );
 }
 
-export default function CurrentWeather({ data, cityName, today, isFavorite, onToggleFavorite }) {
+export interface TodaySummary {
+  min: number;
+  max: number;
+  rain?: number;
+  sunrise?: string;
+  sunset?: string;
+}
+
+interface CurrentWeatherProps {
+  data: CurrentData;
+  cityName: string;
+  today: TodaySummary;
+  rainAlert?: RainAlert | null;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
+  /** Bouton discret pour ouvrir / fermer la carte radar */
+  radarOpen?: boolean;
+  onToggleRadar?: () => void;
+}
+
+// Seules les alertes de pluie (à venir ou en cours) sont affichées : « pas de pluie » est masqué
+const RAIN_ALERT_STYLES = {
+  soon: 'bg-sky-400/15 border-sky-300/40 text-sky-100 text-sm',
+  raining: 'bg-blue-500/20 border-blue-300/40 text-blue-50 text-sm',
+} as const satisfies Record<Exclude<RainAlert['kind'], 'dry'>, string>;
+
+export default function CurrentWeather({
+  data, cityName, today, rainAlert, isFavorite, onToggleFavorite, radarOpen = false, onToggleRadar,
+}: CurrentWeatherProps) {
   const { label, icon } = getWeatherInfo(data.weather_code, 'w-14 h-14 md:w-20 md:h-20 shrink-0', data.is_day !== 0);
   const wind = getWindInfo(data.wind_speed_10m);
   const calm = data.wind_speed_10m < 2;
+  const alert = rainAlert && rainAlert.kind !== 'dry' ? { ...rainAlert, kind: rainAlert.kind } : null;
 
   const dateLabel = new Date(data.time).toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long',
@@ -73,6 +111,38 @@ export default function CurrentWeather({ data, cityName, today, isFavorite, onTo
             </p>
           </div>
         </div>
+
+        {/* Pluie dans les 2 prochaines heures (données au quart d'heure) */}
+        {(alert || onToggleRadar) && (
+          <div className="flex items-stretch gap-2">
+            {alert && (
+              <p
+                role="status"
+                className={`flex-1 min-w-0 flex items-center gap-2 rounded-xl border px-3 py-2 ${RAIN_ALERT_STYLES[alert.kind]}`}
+              >
+                <Umbrella className="w-4 h-4 shrink-0" aria-hidden="true" />
+                {alert.message}
+              </p>
+            )}
+            {onToggleRadar && (
+              <button
+                type="button"
+                onClick={onToggleRadar}
+                aria-expanded={radarOpen}
+                aria-controls="radar-panel"
+                title={radarOpen ? 'Masquer le radar' : 'Voir le radar de pluie'}
+                className={`shrink-0 flex items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition cursor-pointer ${
+                  radarOpen
+                    ? 'bg-sky-500/25 border-sky-300/50 text-white'
+                    : 'bg-white/5 border-white/15 text-slate-200 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <Radar className="w-4 h-4" aria-hidden="true" />
+                Radar
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Détails */}
@@ -80,7 +150,7 @@ export default function CurrentWeather({ data, cityName, today, isFavorite, onTo
         <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center gap-4">
           <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-full border-2 border-white/15 bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center">
             {COMPASS.map((c) => (
-              <span key={c.label} className={`absolute text-[9px] font-semibold text-slate-400 ${c.className}`}>
+              <span key={c.label} className={`absolute text-[10px] font-semibold text-slate-300 ${c.className}`}>
                 {c.label}
               </span>
             ))}
@@ -97,26 +167,16 @@ export default function CurrentWeather({ data, cityName, today, isFavorite, onTo
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-2 md:gap-3">
+        <div className="grid grid-cols-2 gap-2 md:gap-3">
           <Stat
             icon={<Thermometer className="w-4 h-4 text-amber-300" />}
             label="Ressenti"
             value={`${Math.round(data.apparent_temperature)}°`}
           />
           <Stat
-            icon={<Droplets className="w-4 h-4 text-sky-300" />}
-            label="Humidité"
-            value={`${data.relative_humidity_2m}%`}
-          />
-          <Stat
             icon={<CloudRain className="w-4 h-4 text-blue-400" />}
             label="Pluie"
             value={`${today.rain ?? 0}%`}
-          />
-          <Stat
-            icon={<Wind className="w-4 h-4 text-emerald-300" />}
-            label="Rafales km/h"
-            value={Math.round(data.wind_gusts_10m)}
           />
         </div>
       </div>

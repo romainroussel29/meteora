@@ -1,16 +1,25 @@
-import { useState, useEffect, useRef, useId } from 'react';
+import { useState, useEffect, useRef, useId, type FormEvent, type KeyboardEvent } from 'react';
+import type { Place } from '../types/weather';
 import { Search, MapPin } from 'lucide-react';
 import { searchCities } from '../utils/api';
 
 const MIN_CHARS = 2;
 const DEBOUNCE_MS = 300;
 
-export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, loading }) {
+interface SearchBarProps {
+  /** Recherche libre ; renvoie true si une ville a été trouvée */
+  onSearch: (query: string) => Promise<boolean>;
+  onSelectSuggestion: (place: Place) => void;
+  onGeolocate: () => void;
+  loading: boolean;
+}
+
+export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, loading }: SearchBarProps) {
   const [query, setQuery] = useState('');
-  const [suggestions, setSuggestions] = useState([]);
+  const [suggestions, setSuggestions] = useState<Place[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const wrapperRef = useRef(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const listId = useId();
 
   const canSuggest = query.trim().length >= MIN_CHARS;
@@ -18,8 +27,8 @@ export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, l
 
   // Fermer le menu si on clique en dehors de la barre de recherche
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setOpen(false);
       }
     };
@@ -39,7 +48,7 @@ export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, l
         setSuggestions(results);
         setActiveIndex(-1);
       } catch (err) {
-        if (err.name !== 'AbortError') console.error('Erreur autocomplétion :', err);
+        if (!(err instanceof DOMException && err.name === 'AbortError')) console.error('Erreur autocomplétion :', err);
       }
     }, DEBOUNCE_MS);
 
@@ -56,12 +65,12 @@ export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, l
     setActiveIndex(-1);
   };
 
-  const handleSelect = (item) => {
+  const handleSelect = (item: Place) => {
     reset();
     onSelectSuggestion(item);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!query.trim()) return;
     // Si des suggestions sont affichées, on prend la première plutôt que de refaire une requête
@@ -74,7 +83,7 @@ export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, l
   };
 
   // Navigation clavier : ↑ ↓ pour parcourir, Entrée pour choisir, Échap pour fermer
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (!showDropdown) {
       if (e.key === 'ArrowDown' && suggestions.length > 0) setOpen(true);
       return;
@@ -121,7 +130,7 @@ export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, l
         <button
           type="submit"
           disabled={loading}
-          className="hidden sm:block px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-medium rounded-xl transition disabled:opacity-50 cursor-pointer"
+          className="hidden sm:block px-5 py-2.5 bg-sky-700 hover:bg-sky-600 text-white font-medium rounded-xl transition disabled:opacity-50 cursor-pointer"
         >
           Chercher
         </button>
@@ -158,7 +167,7 @@ export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, l
             >
               <div>
                 <span className="font-semibold">{item.name}</span>
-                {item.admin1 && <span className="text-slate-400 text-sm">, {item.admin1}</span>}
+                {item.admin1 && <span className="text-slate-300 text-sm">, {item.admin1}</span>}
               </div>
               <span className="text-xs font-medium bg-white/10 px-2 py-1 rounded text-sky-300">
                 {item.country}
