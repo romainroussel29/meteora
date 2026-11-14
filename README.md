@@ -180,7 +180,7 @@ public/
 ## 👤 Auteur
 
 **Romain Roussel**, développeur web
-[GitHub @romainroussel29](https://github.com/romainroussel29)
+[Portfolio](https://portfolio-roussel.vercel.app/) · [GitHub @romainroussel29](https://github.com/romainroussel29)
 
 Projet sous licence [MIT](./LICENSE).
 
