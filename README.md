@@ -16,7 +16,7 @@
 ![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](./LICENSE)
 
-### [🌐 Ouvrir la démo](https://meteora13.vercel.app)
+### [🌐 Visiter le site](https://meteora13.vercel.app)
 
 </div>
 
