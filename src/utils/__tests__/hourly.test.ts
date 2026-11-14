@@ -35,7 +35,7 @@ describe('getDayHours', () => {
     const hours = getDayHours(makeHourly(), '2026-11-14');
     expect(hours).toHaveLength(12);
     expect(hours[0].time).toBe('2026-11-14T00:00');
-    expect(hours.at(-1).time).toBe('2026-11-14T22:00');
+    expect(hours.at(-1)?.time).toBe('2026-11-14T22:00');
     expect(hours[1].temp).toBe(26); // 14/11 à 2h = index 26
   });
 

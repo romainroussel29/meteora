@@ -26,10 +26,11 @@ describe('getCardinal', () => {
 describe('getWindInfo', () => {
   it.each([
     [0, 'Calme'],
-    [5, 'Brise légère'],
-    [20, 'Vent modéré'],
-    [40, 'Vent fort'],
-    [60, 'Coup de vent'],
+    [5, 'Vent faible'],
+    [16, 'Vent faible'],
+    [25, 'Vent modéré'],
+    [45, 'Vent fort'],
+    [70, 'Coup de vent'],
     [100, 'Tempête'],
   ])('%i km/h → %s', (speed, label) => {
     expect(getWindInfo(speed).label).toBe(label);
@@ -37,7 +38,11 @@ describe('getWindInfo', () => {
 
   it('respecte les seuils exacts', () => {
     expect(getWindInfo(1.9).label).toBe('Calme');
-    expect(getWindInfo(2).label).toBe('Brise légère');
-    expect(getWindInfo(75).label).toBe('Tempête');
+    expect(getWindInfo(2).label).toBe('Vent faible');
+    expect(getWindInfo(19.9).label).toBe('Vent faible');
+    expect(getWindInfo(20).label).toBe('Vent modéré');
+    expect(getWindInfo(39).label).toBe('Vent fort');
+    expect(getWindInfo(62).label).toBe('Coup de vent');
+    expect(getWindInfo(89).label).toBe('Tempête');
   });
 });

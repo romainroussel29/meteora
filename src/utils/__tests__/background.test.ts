@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getBackground, getWeatherScene } from '../background';
+import { getBackground, getWeatherScene, isTwilight } from '../background';
 
 describe('getBackground', () => {
   it('utilise un fond par défaut sans données', () => {
@@ -45,5 +45,43 @@ describe('getWeatherScene', () => {
     [95, false, 'storm'],
   ])('code %i (jour : %s) → %s', (code, isDay, scene) => {
     expect(getWeatherScene(code, isDay)).toBe(scene);
+  });
+});
+
+describe('isTwilight (aube et crépuscule)', () => {
+  // New York, 14 novembre : lever 06:41, coucher 16:38
+  const sunrise = '2026-11-14T06:41';
+  const sunset = '2026-11-14T16:38';
+  const at = (hhmm: string) => isTwilight(`2026-11-14T${hhmm}`, sunrise, sunset);
+
+  it('16h45, juste après le coucher du soleil, est le crépuscule', () => {
+    expect(at('16:45')).toBe(true);
+  });
+
+  it('le crépuscule dure 45 minutes', () => {
+    expect(at('16:38')).toBe(true);
+    expect(at('17:22')).toBe(true);
+    expect(at('17:23')).toBe(false);
+  });
+
+  it("l'aube commence 45 minutes avant le lever", () => {
+    expect(at('05:56')).toBe(true);
+    expect(at('05:55')).toBe(false);
+    expect(at('06:41')).toBe(false); // le soleil est levé : c'est le jour
+  });
+
+  it("n'est ni la journée ni la nuit noire", () => {
+    expect(at('12:00')).toBe(false);
+    expect(at('22:00')).toBe(false);
+  });
+
+  it('sans heures de lever / coucher, pas de crépuscule', () => {
+    expect(isTwilight('2026-11-14T16:45')).toBe(false);
+  });
+
+  it('donne un fond de crépuscule plutôt que de nuit', () => {
+    expect(getBackground(3, false, true)).toContain('rose-900');
+    expect(getBackground(0, false, true)).toContain('orange-700');
+    expect(getBackground(95, false, true)).toContain('purple-950'); // l'orage reste prioritaire
   });
 });
