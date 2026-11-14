@@ -21,7 +21,7 @@
 * **Vent :** boussole avec une flèche qui indique le sens du vent ; sa taille et sa couleur varient avec la vitesse. Libellé selon l'échelle de Beaufort (« Brise légère », « Vent fort »…), direction cardinale et rafales.
 * **Prévisions heure par heure (24 h) :** courbe de température lissée en SVG, probabilité de pluie et vent pour chaque heure. Sur grand écran, les 24 heures tiennent dans la largeur ; sur mobile et tablette, on les fait défiler au doigt, sans barre de défilement visible.
 * **Prévisions sur 7 jours :** barre de températures min/max à l'échelle de la semaine. **Un clic sur un jour** affiche le détail **toutes les 2 heures** (temps, température, pluie, vent), à faire défiler au doigt sur mobile, ou à la souris (glisser ou flèches ◀ ▶) sur ordinateur.
-* **Icônes jour / nuit et fond dynamique :** le dégradé de fond change selon la météo (soleil, pluie, neige, orage…) et passe en mode nuit après le coucher du soleil.
+* **Fond animé selon la météo :** halo de soleil, étoiles la nuit, nuages qui dérivent, pluie, neige, éclairs d'orage ou nappes de brouillard, sur un dégradé qui passe en mode nuit après le coucher du soleil. Animations en CSS pur, désactivées si le système demande de réduire les animations. Aperçu possible via l'URL : `?meteo=pluie`, `?meteo=neige`, `?meteo=orage`, `?meteo=nuit`…
 
 ### Recherche & navigation
 * **Autocomplétion intelligente :** suggestions de villes en temps réel avec un **debounce (300 ms)**. Chaque requête obsolète est annulée (`AbortController`).
@@ -32,7 +32,7 @@
 
 ### Qualité
 * **Requêtes robustes :** vérification des erreurs HTTP, annulation des requêtes concurrentes (une réponse lente ne peut pas écraser une plus récente), messages d'erreur clairs.
-* **Tests unitaires** avec Vitest (47 tests sur la logique métier : vent, icônes, découpage horaire, géolocalisation et appels API simulés…).
+* **Tests unitaires** avec Vitest (60 tests sur la logique métier : vent, icônes, découpage horaire, géolocalisation et appels API simulés…).
 * **Intégration continue :** GitHub Actions lance le lint, les tests et le build à chaque push.
 * **Interface responsive et épurée :** design *glassmorphism* compact, pensé pour voir l'essentiel sans faire défiler, sur ordinateur comme sur smartphone.
 
@@ -66,7 +66,8 @@ meteora/
 │   │   ├── HScroll.jsx          # Défilement horizontal (doigt, souris, flèches) sans barre
 │   │   ├── SearchBar.jsx        # Recherche, autocomplétion clavier, géolocalisation
 │   │   ├── FavoritesBar.jsx     # Liste des villes favorites
-│   │   └── WindArrow.jsx        # Flèche de vent orientée et colorée selon la vitesse
+│   │   ├── WindArrow.jsx        # Flèche de vent orientée et colorée selon la vitesse
+│   │   └── WeatherBackdrop.jsx  # Fond animé (soleil, pluie, neige, orage…)
 │   ├── hooks/
 │   │   ├── useWeather.js        # Chargement des données, annulation, mémorisation
 │   │   └── useFavorites.js      # Gestion des favoris (localStorage)
@@ -75,7 +76,7 @@ meteora/
 │   │   ├── hourly.js            # Prochaines 24 h et heures d'une journée
 │   │   ├── wind.js              # Direction cardinale et échelle de Beaufort
 │   │   ├── weatherIcons.jsx     # Codes météo WMO → icônes et libellés (jour / nuit)
-│   │   ├── background.js        # Dégradé de fond selon la météo
+│   │   ├── background.js        # Dégradé et scène animée selon la météo
 │   │   ├── geolocation.js       # Position de l'utilisateur + nom de la ville
 │   │   ├── storage.js           # Accès sécurisé au localStorage
 │   │   └── __tests__/           # Tests unitaires Vitest

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getBackground } from '../background';
+import { getBackground, getWeatherScene } from '../background';
 
 describe('getBackground', () => {
   it('utilise un fond par défaut sans données', () => {
@@ -22,5 +22,28 @@ describe('getBackground', () => {
   it('distingue pluie et neige', () => {
     expect(getBackground(63, true)).toContain('blue-950');
     expect(getBackground(73, true)).not.toContain('blue-950');
+  });
+});
+
+describe('getWeatherScene', () => {
+  it('ne renvoie rien sans données', () => {
+    expect(getWeatherScene(undefined)).toBeNull();
+  });
+
+  it.each([
+    [0, true, 'clear-day'],
+    [0, false, 'clear-night'],
+    [2, true, 'partly-day'],
+    [1, false, 'partly-night'],
+    [3, true, 'cloudy'],
+    [45, true, 'fog'],
+    [53, true, 'drizzle'],
+    [63, true, 'rain'],
+    [81, false, 'rain'],
+    [75, true, 'snow'],
+    [86, true, 'snow'],
+    [95, false, 'storm'],
+  ])('code %i (jour : %s) → %s', (code, isDay, scene) => {
+    expect(getWeatherScene(code, isDay)).toBe(scene);
   });
 });
