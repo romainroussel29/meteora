@@ -19,7 +19,7 @@
 ### Météo
 * **Météo actuelle détaillée :** température, ressenti, conditions (codes WMO), humidité, risque de pluie, min/max du jour, heures de lever et de coucher du soleil.
 * **Vent :** boussole avec une flèche qui indique le sens du vent ; sa taille et sa couleur varient avec la vitesse. Libellé selon l'échelle de Beaufort (« Brise légère », « Vent fort »…), direction cardinale et rafales.
-* **Prévisions heure par heure (24 h) :** courbe de température lissée en SVG, probabilité de pluie et vent pour chaque heure. L'affichage s'adapte à la largeur de l'écran (pas de 1 h, 2 h ou 3 h) pour ne jamais avoir besoin de défiler horizontalement.
+* **Prévisions heure par heure (24 h) :** courbe de température lissée en SVG, probabilité de pluie et vent pour chaque heure. Sur grand écran, les 24 heures tiennent dans la largeur ; sur mobile et tablette, on les fait défiler au doigt, sans barre de défilement visible.
 * **Prévisions sur 7 jours :** barre de températures min/max à l'échelle de la semaine. **Un clic sur un jour** affiche le détail **matin / après-midi** (temps dominant, température moyenne, pluie, vent).
 * **Icônes jour / nuit et fond dynamique :** le dégradé de fond change selon la météo (soleil, pluie, neige, orage…) et passe en mode nuit après le coucher du soleil.
 
@@ -34,13 +34,13 @@
 * **Requêtes robustes :** vérification des erreurs HTTP, annulation des requêtes concurrentes (une réponse lente ne peut pas écraser une plus récente), messages d'erreur clairs.
 * **Tests unitaires** avec Vitest (52 tests sur la logique métier : vent, icônes, regroupement par demi-journée, géolocalisation et appels API simulés…).
 * **Intégration continue :** GitHub Actions lance le lint, les tests et le build à chaque push.
-* **Interface responsive :** design *glassmorphism* adapté aux ordinateurs, tablettes et smartphones.
+* **Interface responsive et épurée :** design *glassmorphism* compact, pensé pour voir l'essentiel sans faire défiler, sur ordinateur comme sur smartphone.
 
 ---
 
 ## 🛠️ Technologies utilisées
 
-* **Front-end :** [React 19](https://react.dev/) (hooks personnalisés, `useSyncExternalStore`)
+* **Front-end :** [React 19](https://react.dev/) (hooks personnalisés)
 * **Build Tool :** [Vite](https://vitejs.dev/)
 * **Styling :** [Tailwind CSS 4](https://tailwindcss.com/)
 * **Icônes :** [Lucide React](https://lucide.dev/)
@@ -68,8 +68,7 @@ meteora/
 │   │   └── WindArrow.jsx        # Flèche de vent orientée et colorée selon la vitesse
 │   ├── hooks/
 │   │   ├── useWeather.js        # Chargement des données, annulation, mémorisation
-│   │   ├── useFavorites.js      # Gestion des favoris (localStorage)
-│   │   └── useHourStep.js       # Pas d'affichage horaire selon la taille d'écran
+│   │   └── useFavorites.js      # Gestion des favoris (localStorage)
 │   ├── utils/
 │   │   ├── api.js               # Appels aux API (Open-Meteo, Nominatim)
 │   │   ├── halfDays.js          # Regroupement des heures en matin / après-midi

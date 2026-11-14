@@ -80,12 +80,12 @@ export default function App() {
   const background = getBackground(weather?.current.weather_code, weather?.current.is_day !== 0);
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${background} py-8 md:py-12 px-4 md:px-8 transition-colors duration-700`}>
+    <div className={`min-h-screen bg-gradient-to-br ${background} py-4 md:py-6 px-3 md:px-8 transition-colors duration-700`}>
       <div className="max-w-6xl mx-auto">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-6">
+        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6 mb-4">
           <div className="text-center md:text-left">
-            <h1 className="text-3xl font-extrabold text-white tracking-wider">METEORA</h1>
-            <p className="text-sky-300 text-sm">Tableau de bord météorologique</p>
+            <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-wider">METEORA</h1>
+            <p className="hidden md:block text-sky-300 text-xs">Tableau de bord météorologique</p>
           </div>
           <div className="w-full md:max-w-md">
             <SearchBar
@@ -105,21 +105,21 @@ export default function App() {
         />
 
         {shownError && (
-          <div role="alert" className="bg-red-500/20 border border-red-500/50 text-red-200 p-4 rounded-2xl mb-6 text-center">
+          <div role="alert" className="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-2xl mb-4 text-center text-sm">
             {shownError}
           </div>
         )}
 
         {!weather && busy && (
-          <div className="animate-pulse space-y-6" aria-label="Chargement">
+          <div className="animate-pulse space-y-4" aria-label="Chargement">
+            <div className="h-60 bg-white/10 rounded-3xl"></div>
             <div className="h-72 bg-white/10 rounded-3xl"></div>
-            <div className="h-80 bg-white/10 rounded-3xl"></div>
             <div className="h-56 bg-white/10 rounded-3xl"></div>
           </div>
         )}
 
         {weather && (
-          <main className={`space-y-6 transition-opacity ${busy ? 'opacity-60' : ''}`} aria-busy={busy}>
+          <main className={`space-y-4 transition-opacity ${busy ? 'opacity-60' : ''}`} aria-busy={busy}>
             <CurrentWeather
               data={weather.current}
               cityName={data.location.name}

@@ -19,17 +19,17 @@ function HalfDayDetail({ half }) {
       </div>
     );
   }
-  const { icon, label } = getWeatherInfo(half.code, 'w-12 h-12');
+  const { icon, label } = getWeatherInfo(half.code, 'w-10 h-10 md:w-12 md:h-12 shrink-0');
   const wind = getWindInfo(half.windSpeed);
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
+    <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 flex items-center gap-3 md:gap-4">
       {icon}
       <div>
         <p className="text-[11px] uppercase tracking-widest text-slate-400">
           {half.label} · {half.from}h–{half.to}h
         </p>
-        <p className="text-2xl font-bold">{Math.round(half.temp)}°</p>
+        <p className="text-xl md:text-2xl font-bold leading-tight">{Math.round(half.temp)}°</p>
         <p className="text-sm text-slate-300">{label}</p>
       </div>
       <div className="ml-auto text-sm text-right space-y-1.5">
@@ -63,15 +63,15 @@ export default function ForecastList({ daily, hourly }) {
   const range = weekMax - weekMin || 1;
 
   return (
-    <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-6 md:p-8 text-white">
-      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-6">
-        <h3 className="text-lg font-semibold">Prévisions sur 7 jours</h3>
-        <p className="text-xs text-slate-400">Cliquez sur un jour pour le détail matin / après-midi</p>
+    <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-4 md:p-6 text-white">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+        <h3 className="font-semibold">Prévisions sur 7 jours</h3>
+        <p className="text-xs text-slate-400">Touchez un jour pour le détail matin / après-midi</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-7 gap-2 lg:gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-7 gap-1.5 lg:gap-3">
         {daily.time.map((date, i) => {
-          const { icon, label } = getWeatherInfo(daily.weather_code[i], 'w-8 h-8 lg:w-10 lg:h-10');
+          const { icon, label } = getWeatherInfo(daily.weather_code[i], 'w-7 h-7 lg:w-9 lg:h-9');
           const tMin = daily.temperature_2m_min[i];
           const tMax = daily.temperature_2m_max[i];
           const rain = daily.precipitation_probability_max?.[i] ?? 0;
@@ -85,13 +85,13 @@ export default function ForecastList({ daily, hourly }) {
               onClick={() => setSelected(isOpen ? null : date)}
               aria-expanded={isOpen}
               aria-controls="day-details"
-              className={`flex lg:flex-col items-center gap-3 rounded-2xl px-4 py-3 lg:py-5 text-left transition cursor-pointer border ${
+              className={`flex lg:flex-col items-center gap-3 rounded-xl lg:rounded-2xl px-3 py-2 lg:py-4 text-left transition cursor-pointer border ${
                 isOpen
                   ? 'bg-sky-500/20 border-sky-400/50'
                   : `border-transparent hover:bg-white/10 ${i === 0 ? 'bg-white/10' : 'bg-white/5'}`
               }`}
             >
-              <span className="capitalize w-24 lg:w-auto text-sm font-medium text-slate-200">
+              <span className="capitalize w-20 lg:w-auto text-sm font-medium text-slate-200">
                 {i === 0 ? "Aujourd'hui" : formatDay(date)}
               </span>
               {icon}
@@ -126,9 +126,9 @@ export default function ForecastList({ daily, hourly }) {
                 key={`${date}-details`}
                 id="day-details"
                 ref={detailsRef}
-                className="scroll-mb-6 col-span-full lg:order-last mt-1 lg:mt-2 rounded-2xl bg-white/5 border border-white/10 p-4 md:p-5"
+                className="scroll-mb-6 col-span-full lg:order-last my-1 lg:mt-2 rounded-2xl bg-white/5 border border-white/10 p-3 md:p-5"
               >
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-2">
                   <p className="font-semibold capitalize">{formatLongDay(date)}</p>
                   <button
                     type="button"
@@ -139,7 +139,7 @@ export default function ForecastList({ daily, hourly }) {
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="grid gap-2 sm:gap-3 sm:grid-cols-2">
                   {getHalfDays(hourly, date).map((half) => (
                     <HalfDayDetail key={half.key} half={half} />
                   ))}

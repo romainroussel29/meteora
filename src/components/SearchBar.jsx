@@ -112,15 +112,16 @@ export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, l
             aria-controls={listId}
             aria-activedescendant={activeIndex >= 0 ? `${listId}-${activeIndex}` : undefined}
             autoComplete="off"
-            className="w-full pl-10 pr-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400"
+            enterKeyHint="search"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-sky-400"
           />
-          <Search className="w-5 h-5 text-slate-300 absolute left-3 top-3.5" aria-hidden="true" />
+          <Search className="w-5 h-5 text-slate-300 absolute left-3 top-3" aria-hidden="true" />
         </div>
 
         <button
           type="submit"
           disabled={loading}
-          className="px-5 py-3 bg-sky-500 hover:bg-sky-400 text-white font-medium rounded-xl transition disabled:opacity-50 cursor-pointer"
+          className="hidden sm:block px-5 py-2.5 bg-sky-500 hover:bg-sky-400 text-white font-medium rounded-xl transition disabled:opacity-50 cursor-pointer"
         >
           Chercher
         </button>
@@ -131,7 +132,7 @@ export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, l
           disabled={loading}
           title="Utiliser ma position"
           aria-label="Utiliser ma position"
-          className="p-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl transition disabled:opacity-50 cursor-pointer"
+          className="p-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl transition disabled:opacity-50 cursor-pointer"
         >
           <MapPin className="w-5 h-5" />
         </button>
