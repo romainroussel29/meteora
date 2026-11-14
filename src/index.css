@@ -8,3 +8,117 @@
     display: none;
   }
 }
+
+/* ───────────── Fond animé selon la météo (WeatherBackdrop) ───────────── */
+
+.wx-sun {
+  position: absolute;
+  top: -12vmax;
+  right: -12vmax;
+  width: 45vmax;
+  height: 45vmax;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgb(253 224 71 / 0.45) 0%, rgb(251 191 36 / 0.18) 35%, transparent 70%);
+  animation: wx-pulse 8s ease-in-out infinite;
+}
+
+.wx-moon {
+  position: absolute;
+  top: -6vmax;
+  right: -6vmax;
+  width: 30vmax;
+  height: 30vmax;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgb(224 231 255 / 0.22) 0%, rgb(165 180 252 / 0.08) 40%, transparent 70%);
+}
+
+.wx-star {
+  position: absolute;
+  border-radius: 9999px;
+  background: white;
+  animation: wx-twinkle ease-in-out infinite;
+}
+
+.wx-cloud {
+  position: absolute;
+  left: 0;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / var(--wx-cloud-alpha, 0.08));
+  filter: blur(28px);
+  animation: wx-drift linear infinite;
+}
+
+.wx-drop {
+  position: absolute;
+  top: -15vh;
+  width: 1.5px;
+  border-radius: 9999px;
+  background: linear-gradient(to bottom, transparent, rgb(186 230 253 / 0.55));
+  animation: wx-fall linear infinite;
+}
+
+.wx-flake {
+  position: absolute;
+  top: -5vh;
+  border-radius: 9999px;
+  background: white;
+  animation: wx-snow linear infinite;
+}
+
+.wx-lightning {
+  position: absolute;
+  inset: 0;
+  background: rgb(237 233 254);
+  opacity: 0;
+  animation: wx-flash 9s linear infinite;
+}
+
+.wx-fog {
+  position: absolute;
+  left: -50%;
+  width: 200%;
+  height: 35vh;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.1), transparent);
+  filter: blur(24px);
+  animation: wx-fog ease-in-out infinite alternate;
+}
+
+@keyframes wx-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+@keyframes wx-twinkle {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.9; }
+}
+@keyframes wx-drift {
+  from { transform: translateX(-60vw); }
+  to { transform: translateX(110vw); }
+}
+@keyframes wx-fall {
+  to { transform: translate3d(-6vh, 130vh, 0); }
+}
+@keyframes wx-snow {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(3vw, 55vh, 0); }
+  100% { transform: translate3d(-2vw, 110vh, 0); }
+}
+@keyframes wx-flash {
+  0%, 90%, 100% { opacity: 0; }
+  90.5% { opacity: 0.35; }
+  91.5% { opacity: 0; }
+  92.5% { opacity: 0.2; }
+  93.5% { opacity: 0; }
+}
+@keyframes wx-fog {
+  from { transform: translateX(-12%); }
+  to { transform: translateX(12%); }
+}
+
+/* Respecte le réglage "réduire les animations" du système */
+@media (prefers-reduced-motion: reduce) {
+  .wx-sun, .wx-star, .wx-cloud, .wx-drop, .wx-flake, .wx-lightning, .wx-fog {
+    animation: none;
+  }
+  .wx-drop, .wx-flake, .wx-lightning { display: none; }
+}

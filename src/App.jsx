@@ -4,11 +4,19 @@ import CurrentWeather from './components/CurrentWeather';
 import HourlyForecast from './components/HourlyForecast';
 import ForecastList from './components/ForecastList';
 import FavoritesBar from './components/FavoritesBar';
+import WeatherBackdrop from './components/WeatherBackdrop';
 import useWeather from './hooks/useWeather';
 import useFavorites from './hooks/useFavorites';
 import { searchCities } from './utils/api';
 import { getCurrentLocation } from './utils/geolocation';
-import { getBackground } from './utils/background';
+import { getBackground, getWeatherScene } from './utils/background';
+
+// Aperçu des fonds animés : ajouter ?meteo=pluie (ou soleil, nuit, nuages, brouillard, orage, neige…) à l'URL
+const PREVIEW_SCENES = {
+  soleil: 'clear-day', nuit: 'clear-night', eclaircies: 'partly-day', nuages: 'cloudy',
+  brouillard: 'fog', bruine: 'drizzle', pluie: 'rain', orage: 'storm', neige: 'snow',
+};
+const previewScene = PREVIEW_SCENES[new URLSearchParams(window.location.search).get('meteo')];
 
 const toLocation = (place) => ({
   latitude: place.latitude,
@@ -77,11 +85,14 @@ export default function App() {
   const weather = data?.weather;
   const busy = loading || locating;
   const shownError = error || weatherError;
-  const background = getBackground(weather?.current.weather_code, weather?.current.is_day !== 0);
+  const isDay = weather?.current.is_day !== 0;
+  const background = getBackground(weather?.current.weather_code, isDay);
+  const scene = previewScene ?? getWeatherScene(weather?.current.weather_code, isDay);
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br ${background} py-4 md:py-6 px-3 md:px-8 transition-colors duration-700`}>
-      <div className="max-w-6xl mx-auto">
+    <div className={`relative min-h-screen bg-gradient-to-br ${background} py-4 md:py-6 px-3 md:px-8 transition-colors duration-700`}>
+      <WeatherBackdrop scene={scene} />
+      <div className="relative max-w-6xl mx-auto">
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6 mb-4">
           <div className="text-center md:text-left">
             <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-wider">METEORA</h1>
