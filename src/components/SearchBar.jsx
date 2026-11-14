@@ -104,7 +104,7 @@ export default function SearchBar({ onSearch, onSelectSuggestion, onGeolocate, l
             }}
             onFocus={() => setOpen(true)}
             onKeyDown={handleKeyDown}
-            placeholder="Rechercher une ville (ex: Marseille, Tokyo...)"
+            placeholder="Rechercher une ville…"
             aria-label="Rechercher une ville"
             role="combobox"
             aria-autocomplete="list"
