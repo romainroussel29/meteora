@@ -16,7 +16,7 @@
 ![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](./LICENSE)
 
-### [🌐 Ouvrir la démo](https://meteora-ten-sooty.vercel.app)
+### [🌐 Ouvrir la démo](https://meteora13.vercel.app)
 
 </div>
 
@@ -54,11 +54,11 @@
 | 📱 **Application** | Installable sur iPhone, Android et ordinateur, fonctionne hors ligne |
 
 > 💡 Pour voir les fonds animés sans attendre la bonne météo, ajoutez `?meteo=` à l'adresse :
-> [`?meteo=neige`](https://meteora-ten-sooty.vercel.app/?meteo=neige) ·
-> [`?meteo=orage`](https://meteora-ten-sooty.vercel.app/?meteo=orage) ·
-> [`?meteo=pluie`](https://meteora-ten-sooty.vercel.app/?meteo=pluie) ·
-> [`?meteo=nuit`](https://meteora-ten-sooty.vercel.app/?meteo=nuit) ·
-> [`?meteo=brouillard`](https://meteora-ten-sooty.vercel.app/?meteo=brouillard)
+> [`?meteo=neige`](https://meteora13.vercel.app/?meteo=neige) ·
+> [`?meteo=orage`](https://meteora13.vercel.app/?meteo=orage) ·
+> [`?meteo=pluie`](https://meteora13.vercel.app/?meteo=pluie) ·
+> [`?meteo=nuit`](https://meteora13.vercel.app/?meteo=nuit) ·
+> [`?meteo=brouillard`](https://meteora13.vercel.app/?meteo=brouillard)
 
 ---
 

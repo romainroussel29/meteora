@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://meteora-ten-sooty.vercel.app/sitemap.xml
+Sitemap: https://meteora13.vercel.app/sitemap.xml
