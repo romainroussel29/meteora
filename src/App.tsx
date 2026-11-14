@@ -8,6 +8,7 @@ import FavoritesBar from './components/FavoritesBar';
 import WeatherBackdrop from './components/WeatherBackdrop';
 import PullToRefresh from './components/PullToRefresh';
 import RadarPanel from './components/RadarPanel';
+import InstallButton from './components/InstallButton';
 import useWeather from './hooks/useWeather';
 import useFavorites from './hooks/useFavorites';
 import useOnlineStatus from './hooks/useOnlineStatus';
@@ -92,6 +93,9 @@ export default function App() {
           <div className="text-center md:text-left">
             <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-wider">METEORA</h1>
             <p className="hidden md:block text-sky-300 text-xs">Tableau de bord météorologique</p>
+            <div className="mt-1.5 empty:hidden">
+              <InstallButton />
+            </div>
           </div>
           <div className="w-full md:max-w-md">
             <SearchBar
