@@ -72,6 +72,15 @@ body {
   animation: wx-fall linear infinite;
 }
 
+/* La nuit, sur fond sombre, la pluie doit rester visible : gouttes un peu plus épaisses et lumineuses */
+.wx-night .wx-drop {
+  width: 1.5px;
+  background: linear-gradient(to bottom, transparent, rgb(224 242 254 / 0.6));
+}
+.wx-night .wx-flake {
+  box-shadow: 0 0 4px rgb(255 255 255 / 0.6);
+}
+
 .wx-flake {
   position: absolute;
   top: -1rem;

@@ -85,7 +85,7 @@ export default function App() {
 
   return (
     <div className={`relative min-h-screen bg-gradient-to-br ${background} pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] md:py-6 px-3 md:px-8 transition-colors duration-700`}>
-      <WeatherBackdrop scene={scene} />
+      <WeatherBackdrop scene={scene} night={!isDay && !twilight} />
       <PullToRefresh onRefresh={refresh} refreshing={refreshing} />
       <div className="relative max-w-6xl mx-auto">
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6 mb-4">

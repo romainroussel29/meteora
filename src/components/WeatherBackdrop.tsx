@@ -67,12 +67,12 @@ const SCENES: Record<WeatherScene, SceneConfig> = {
  * Fond animé discret, limité à un bandeau en haut de la page, qui illustre la météo actuelle.
  * Purement décoratif : masqué aux lecteurs d'écran et sans interaction.
  */
-export default function WeatherBackdrop({ scene }: { scene: WeatherScene | null }) {
+export default function WeatherBackdrop({ scene, night = false }: { scene: WeatherScene | null; night?: boolean }) {
   const config = scene ? SCENES[scene] : null;
   if (!config) return null;
 
   return (
-    <div aria-hidden="true" className="wx-band pointer-events-none absolute inset-x-0 top-0 overflow-hidden">
+    <div aria-hidden="true" className={`wx-band pointer-events-none absolute inset-x-0 top-0 overflow-hidden ${night ? 'wx-night' : ''}`}>
       {config.sun && <div className="wx-sun" />}
       {config.moon && <div className="wx-moon" />}
 
