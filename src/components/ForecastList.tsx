@@ -3,7 +3,7 @@ import { ChevronDown, Droplets, X } from 'lucide-react';
 import type { DailyWeather, HourEntry, HourlyWeather } from '../types/weather';
 import { getWeatherInfo } from '../utils/weatherIcons';
 import { getDayHours } from '../utils/hourly';
-import { getCardinal } from '../utils/wind';
+import { getWindOrigin } from '../utils/wind';
 import HScroll from './HScroll';
 import WindArrow from './WindArrow';
 
@@ -26,7 +26,7 @@ function HourSlot({ slot }: { slot: HourEntry }) {
       <span className={`flex items-center gap-0.5 text-[11px] ${slot.rain > 0 ? 'text-sky-300' : 'text-transparent'}`}>
         <Droplets className="w-2.5 h-2.5" />{slot.rain}%
       </span>
-      <span className="flex items-center gap-1 text-[11px] text-slate-300" title={`Vent du ${getCardinal(slot.windDir)}`}>
+      <span className="flex items-center gap-1 text-[11px] text-slate-300" title={`Vent ${getWindOrigin(slot.windDir)}`}>
         <WindArrow direction={slot.windDir} speed={slot.windSpeed} size={12} />
         {Math.round(slot.windSpeed)}
       </span>

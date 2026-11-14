@@ -3,7 +3,7 @@ import { Thermometer, Sunrise, Sunset, Star, CloudRain, Umbrella, Radar } from '
 import type { CurrentWeather as CurrentData } from '../types/weather';
 import type { RainAlert } from '../utils/rain';
 import { getWeatherInfo } from '../utils/weatherIcons';
-import { getCardinal, getWindInfo } from '../utils/wind';
+import { getWindInfo, getWindOrigin } from '../utils/wind';
 import WindArrow from './WindArrow';
 
 const COMPASS = [
@@ -162,7 +162,7 @@ export default function CurrentWeather({
               <span className={`ml-2 text-sm font-semibold ${wind.color}`}>{wind.label}</span>
             </p>
             <p className="text-xs md:text-sm text-slate-300">
-              {calm ? 'Pas de vent' : `Vient du ${getCardinal(data.wind_direction_10m)} (${Math.round(data.wind_direction_10m)}°)`}
+              {calm ? 'Pas de vent' : `Vient ${getWindOrigin(data.wind_direction_10m)}`}
             </p>
           </div>
         </div>

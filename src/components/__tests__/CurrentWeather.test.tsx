@@ -37,7 +37,7 @@ describe('<CurrentWeather />', () => {
   it('décrit le vent (vitesse, force et direction)', () => {
     renderCard();
     expect(screen.getByText('Vent faible')).toBeInTheDocument(); // 18 km/h
-    expect(screen.getByText('Vient du O (250°)')).toBeInTheDocument();
+    expect(screen.getByText("Vient de l'ouest")).toBeInTheDocument(); // 250°
   });
 
   it('affiche l’alerte « pluie dans l’heure »', () => {

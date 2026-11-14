@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getCardinal, getWindInfo } from '../wind';
+import { getCardinal, getCardinalName, getWindInfo, getWindOrigin } from '../wind';
 
 describe('getCardinal', () => {
   it('convertit les angles principaux en points cardinaux', () => {
@@ -44,5 +44,28 @@ describe('getWindInfo', () => {
     expect(getWindInfo(39).label).toBe('Vent fort');
     expect(getWindInfo(62).label).toBe('Coup de vent');
     expect(getWindInfo(89).label).toBe('Tempête');
+  });
+});
+
+describe('direction en toutes lettres', () => {
+  it.each([
+    [0, 'nord'],
+    [45, 'nord-est'],
+    [92, 'est'],
+    [135, 'sud-est'],
+    [180, 'sud'],
+    [225, 'sud-ouest'],
+    [270, 'ouest'],
+    [315, 'nord-ouest'],
+  ])('%i° → %s', (deg, name) => {
+    expect(getCardinalName(deg)).toBe(name);
+  });
+
+  it("accorde « de l' » devant une voyelle et « du » sinon", () => {
+    expect(getWindOrigin(92)).toBe("de l'est");
+    expect(getWindOrigin(270)).toBe("de l'ouest");
+    expect(getWindOrigin(0)).toBe('du nord');
+    expect(getWindOrigin(200)).toBe('du sud');
+    expect(getWindOrigin(310)).toBe('du nord-ouest');
   });
 });
