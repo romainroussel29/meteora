@@ -31,12 +31,12 @@ export default function CurrentWeather({ data, cityName, today, isFavorite, onTo
   });
 
   return (
-    <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-4 md:p-6 text-white grid gap-4 md:gap-6 md:grid-cols-2 md:items-center">
+    <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-4 md:p-6 text-white grid grid-cols-1 gap-4 md:gap-6 md:grid-cols-2 md:items-center">
       {/* Bloc principal */}
-      <div className="space-y-3">
+      <div className="space-y-3 min-w-0">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sky-300 text-[11px] md:text-xs uppercase tracking-widest">
+            <p className="text-sky-300 text-[11px] md:text-xs uppercase tracking-wider md:tracking-widest truncate">
               {dateLabel} · {data.time.slice(11, 16)}
             </p>
             <h2 className="text-2xl md:text-3xl font-bold truncate">{cityName}</h2>
@@ -76,7 +76,7 @@ export default function CurrentWeather({ data, cityName, today, isFavorite, onTo
       </div>
 
       {/* Détails */}
-      <div className="space-y-2 md:space-y-3">
+      <div className="space-y-2 md:space-y-3 min-w-0">
         <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex items-center gap-4">
           <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-full border-2 border-white/15 bg-gradient-to-br from-white/10 to-transparent flex items-center justify-center">
             {COMPASS.map((c) => (
