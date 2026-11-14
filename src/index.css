@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Désactive le "tirer pour recharger" natif du navigateur : l'application gère le sien */
+html,
+body {
+  overscroll-behavior-y: none;
+}
+
 /* Défilement horizontal sans barre visible (le défilement au doigt reste possible) */
 @utility scrollbar-none {
   scrollbar-width: none;

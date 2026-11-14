@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 import SearchBar from './components/SearchBar';
 import CurrentWeather from './components/CurrentWeather';
 import HourlyForecast from './components/HourlyForecast';
 import ForecastList from './components/ForecastList';
 import FavoritesBar from './components/FavoritesBar';
 import WeatherBackdrop from './components/WeatherBackdrop';
+import PullToRefresh from './components/PullToRefresh';
 import useWeather from './hooks/useWeather';
 import useFavorites from './hooks/useFavorites';
 import useOnlineStatus from './hooks/useOnlineStatus';
@@ -26,7 +28,7 @@ const toLocation = (place) => ({
 });
 
 export default function App() {
-  const { data, location, setLocation, loading, error: weatherError } = useWeather();
+  const { data, location, setLocation, loading, refreshing, refresh, error: weatherError } = useWeather();
   const { favorites, isFavorite, toggleFavorite, removeFavorite } = useFavorites();
   const online = useOnlineStatus();
   const [error, setError] = useState('');
@@ -94,6 +96,7 @@ export default function App() {
   return (
     <div className={`relative min-h-screen bg-gradient-to-br ${background} pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] md:py-6 px-3 md:px-8 transition-colors duration-700`}>
       <WeatherBackdrop scene={scene} />
+      <PullToRefresh onRefresh={refresh} refreshing={refreshing} />
       <div className="relative max-w-6xl mx-auto">
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6 mb-4">
           <div className="text-center md:text-left">
@@ -134,6 +137,23 @@ export default function App() {
             <div className="h-60 bg-white/10 rounded-3xl"></div>
             <div className="h-72 bg-white/10 rounded-3xl"></div>
             <div className="h-56 bg-white/10 rounded-3xl"></div>
+          </div>
+        )}
+
+        {weather && (
+          <div className="flex justify-end -mt-2 mb-2">
+            <button
+              type="button"
+              onClick={refresh}
+              disabled={busy}
+              title="Actualiser"
+              className="flex items-center gap-1.5 text-[11px] md:text-xs text-slate-300 hover:text-white transition cursor-pointer disabled:cursor-default"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+              {refreshing
+                ? 'Actualisation…'
+                : `Actualisé à ${new Date(data.updatedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`}
+            </button>
           </div>
         )}
 

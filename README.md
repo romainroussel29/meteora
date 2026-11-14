@@ -41,6 +41,7 @@
 | 🎨 **Fond animé** | Soleil, étoiles, nuages, pluie, neige, orage ou brouillard selon la météo réelle |
 | 📍 **Géolocalisation** | Météo du lieu où l'on se trouve à chaque ouverture, avec le vrai nom de la ville |
 | 🔎 **Recherche** | Autocomplétion des villes, utilisable entièrement au clavier |
+| 🔄 **Actualisation** | Mise à jour automatique toutes les heures (et au retour dans l'application), **tirer vers le bas pour actualiser** sur mobile, bouton « Actualisé à… » sur ordinateur |
 | ⭐ **Favoris** | Villes favorites et dernière ville consultée mémorisées |
 | 📱 **Application** | Installable sur iPhone, Android et ordinateur, fonctionne hors ligne |
 
@@ -73,11 +74,12 @@ Ce projet fait partie de mon portfolio. Voici les choix techniques qui me sembla
 
 - **Hooks personnalisés** : `useWeather` (chargement, erreurs, mémorisation), `useFavorites` et `useOnlineStatus` (avec `useSyncExternalStore`) gardent les composants simples.
 - **Requêtes robustes** : vérification des erreurs HTTP et annulation des requêtes obsolètes avec `AbortController`. Une réponse lente ne peut jamais écraser une recherche plus récente.
+- **Actualisation intelligente** : vérification chaque minute et à chaque retour au premier plan (`visibilitychange`), car iOS suspend les minuteurs des applications en arrière-plan. Le « tirer pour actualiser » est fait maison avec les événements tactiles (seuil, résistance, verrouillage vertical pour ne pas gêner les défilements horizontaux).
 - **Autocomplétion optimisée** : *debounce* de 300 ms et pattern ARIA *combobox* (↑ ↓, Entrée, Échap).
 - **Graphique sans librairie** : courbe de température en SVG (courbes de Bézier) et défilement horizontal maison (doigt, glisser à la souris, flèches).
 - **Animations en CSS pur** : le fond météo n'utilise aucune librairie et respecte le réglage « réduire les animations ».
 - **PWA** : manifeste, icônes, *service worker* écrit à la main (cache de l'application, réseau d'abord pour la météo, secours hors ligne), prise en compte de l'encoche de l'iPhone.
-- **Qualité** : 60 tests unitaires avec Vitest sur la logique métier, ESLint, et intégration continue GitHub Actions (lint + tests + build) à chaque push.
+- **Qualité** : 64 tests unitaires avec Vitest sur la logique métier, ESLint, et intégration continue GitHub Actions (lint + tests + build) à chaque push.
 
 ### Stack
 
@@ -119,7 +121,7 @@ L'application est alors disponible sur `http://localhost:5173`.
 
 ```text
 src/
-├── components/     # Interface : météo actuelle, 24 h, 7 jours, recherche, favoris, fond animé…
+├── components/     # Interface : météo actuelle, 24 h, 7 jours, recherche, favoris, fond animé, tirer pour actualiser…
 ├── hooks/          # useWeather, useFavorites, useOnlineStatus
 ├── utils/          # API, géolocalisation, vent, icônes, découpage horaire, stockage
 │   └── __tests__/  # Tests unitaires Vitest
