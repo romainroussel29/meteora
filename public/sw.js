@@ -6,7 +6,7 @@
  *
  * Pensez à incrémenter VERSION si vous modifiez ce fichier.
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const APP_CACHE = `meteora-app-${VERSION}`;
 const DATA_CACHE = `meteora-data-${VERSION}`;
 const PRECACHE = ['/', '/manifest.webmanifest', '/favicon.svg', '/apple-touch-icon.png', '/icons/icon-192.png'];
