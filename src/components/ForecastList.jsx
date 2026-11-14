@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Droplets, X } from 'lucide-react';
 import { getWeatherInfo } from '../utils/weatherIcons';
-import { getHalfDays } from '../utils/halfDays';
-import { getCardinal, getWindInfo } from '../utils/wind';
+import { getDayHours } from '../utils/hourly';
+import { getCardinal } from '../utils/wind';
+import HScroll from './HScroll';
 import WindArrow from './WindArrow';
 
 // "T12:00" évite le décalage d'un jour lié au fuseau UTC
@@ -11,37 +12,23 @@ const formatDay = (dateStr) => toDate(dateStr).toLocaleDateString('fr-FR', { wee
 const formatLongDay = (dateStr) =>
   toDate(dateStr).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 
-function HalfDayDetail({ half }) {
-  if (half.temp == null) {
-    return (
-      <div className="bg-white/5 rounded-2xl p-4 text-sm text-slate-400">
-        {half.label} : pas de données
-      </div>
-    );
-  }
-  const { icon, label } = getWeatherInfo(half.code, 'w-10 h-10 md:w-12 md:h-12 shrink-0');
-  const wind = getWindInfo(half.windSpeed);
-
+function HourSlot({ slot }) {
+  const { icon, label } = getWeatherInfo(slot.code, 'w-7 h-7', slot.isDay);
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl md:rounded-2xl p-3 md:p-4 flex items-center gap-3 md:gap-4">
+    <div
+      className="shrink-0 w-16 md:w-auto md:flex-1 md:min-w-[4.5rem] flex flex-col items-center gap-1.5 rounded-xl bg-white/5 py-2.5"
+      title={label}
+    >
+      <span className="text-xs text-slate-300">{slot.time.slice(11, 13)}h</span>
       {icon}
-      <div>
-        <p className="text-[11px] uppercase tracking-widest text-slate-400">
-          {half.label} · {half.from}h–{half.to}h
-        </p>
-        <p className="text-xl md:text-2xl font-bold leading-tight">{Math.round(half.temp)}°</p>
-        <p className="text-sm text-slate-300">{label}</p>
-      </div>
-      <div className="ml-auto text-sm text-right space-y-1.5">
-        <p className={`flex items-center justify-end gap-1 ${half.rain > 0 ? 'text-sky-300' : 'text-slate-400'}`}>
-          <Droplets className="w-4 h-4" /> {half.rain}%
-        </p>
-        <p className="flex items-center justify-end gap-1.5 text-slate-200">
-          <WindArrow direction={half.windDir} speed={half.windSpeed} size={16} />
-          {Math.round(half.windSpeed)} km/h {getCardinal(half.windDir)}
-        </p>
-        <p className={`text-xs ${wind.color}`}>{wind.label}</p>
-      </div>
+      <span className="font-semibold">{Math.round(slot.temp)}°</span>
+      <span className={`flex items-center gap-0.5 text-[10px] ${slot.rain > 0 ? 'text-sky-300' : 'text-transparent'}`}>
+        <Droplets className="w-2.5 h-2.5" />{slot.rain}%
+      </span>
+      <span className="flex items-center gap-1 text-[11px] text-slate-300" title={`Vent du ${getCardinal(slot.windDir)}`}>
+        <WindArrow direction={slot.windDir} speed={slot.windSpeed} size={12} />
+        {Math.round(slot.windSpeed)}
+      </span>
     </div>
   );
 }
@@ -66,7 +53,7 @@ export default function ForecastList({ daily, hourly }) {
     <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-4 md:p-6 text-white">
       <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
         <h3 className="font-semibold">Prévisions sur 7 jours</h3>
-        <p className="text-xs text-slate-400">Touchez un jour pour le détail matin / après-midi</p>
+        <p className="text-xs text-slate-400">Touchez un jour pour le détail toutes les 2 h</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-7 gap-1.5 lg:gap-3">
@@ -139,11 +126,14 @@ export default function ForecastList({ daily, hourly }) {
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="grid gap-2 sm:gap-3 sm:grid-cols-2">
-                  {getHalfDays(hourly, date).map((half) => (
-                    <HalfDayDetail key={half.key} half={half} />
-                  ))}
-                </div>
+                <HScroll label={`Prévisions toutes les 2 heures, ${formatLongDay(date)}`}>
+                  <div className="flex w-max min-w-full gap-1.5 md:gap-2">
+                    {getDayHours(hourly, date, 2).map((slot) => (
+                      <HourSlot key={slot.time} slot={slot} />
+                    ))}
+                  </div>
+                </HScroll>
+                <p className="mt-2 text-[11px] text-slate-400">Vent en km/h · glissez pour voir toute la journée</p>
               </div>
             ),
           ];

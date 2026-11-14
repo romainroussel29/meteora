@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getUpcomingHours } from '../hourly';
+import { getUpcomingHours, getDayHours } from '../hourly';
 import { makeHourly } from './fixtures';
 
 describe('getUpcomingHours', () => {
@@ -27,5 +27,23 @@ describe('getUpcomingHours', () => {
     const [night, , day] = getUpcomingHours(makeHourly(), '2026-11-13T06:00', { hours: 3 });
     expect(night.isDay).toBe(false);
     expect(day.isDay).toBe(true);
+  });
+});
+
+describe('getDayHours', () => {
+  it('renvoie une journée toutes les 2 heures (0h → 22h)', () => {
+    const hours = getDayHours(makeHourly(), '2026-11-14');
+    expect(hours).toHaveLength(12);
+    expect(hours[0].time).toBe('2026-11-14T00:00');
+    expect(hours.at(-1).time).toBe('2026-11-14T22:00');
+    expect(hours[1].temp).toBe(26); // 14/11 à 2h = index 26
+  });
+
+  it('accepte un autre pas', () => {
+    expect(getDayHours(makeHourly(), '2026-11-13', 3)).toHaveLength(8);
+  });
+
+  it('renvoie un tableau vide pour une date absente', () => {
+    expect(getDayHours(makeHourly(), '2030-01-01')).toEqual([]);
   });
 });
