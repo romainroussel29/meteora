@@ -7,6 +7,7 @@ import FavoritesBar from './components/FavoritesBar';
 import WeatherBackdrop from './components/WeatherBackdrop';
 import useWeather from './hooks/useWeather';
 import useFavorites from './hooks/useFavorites';
+import useOnlineStatus from './hooks/useOnlineStatus';
 import { searchCities } from './utils/api';
 import { getCurrentLocation } from './utils/geolocation';
 import { getBackground, getWeatherScene } from './utils/background';
@@ -27,6 +28,7 @@ const toLocation = (place) => ({
 export default function App() {
   const { data, location, setLocation, loading, error: weatherError } = useWeather();
   const { favorites, isFavorite, toggleFavorite, removeFavorite } = useFavorites();
+  const online = useOnlineStatus();
   const [error, setError] = useState('');
   const [locating, setLocating] = useState(false);
 
@@ -90,7 +92,7 @@ export default function App() {
   const scene = previewScene ?? getWeatherScene(weather?.current.weather_code, isDay);
 
   return (
-    <div className={`relative min-h-screen bg-gradient-to-br ${background} py-4 md:py-6 px-3 md:px-8 transition-colors duration-700`}>
+    <div className={`relative min-h-screen bg-gradient-to-br ${background} pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))] md:py-6 px-3 md:px-8 transition-colors duration-700`}>
       <WeatherBackdrop scene={scene} />
       <div className="relative max-w-6xl mx-auto">
         <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-6 mb-4">
@@ -115,7 +117,13 @@ export default function App() {
           onRemove={removeFavorite}
         />
 
-        {shownError && (
+        {!online && (
+          <div role="status" className="bg-amber-500/15 border border-amber-400/40 text-amber-100 px-3 py-2 rounded-2xl mb-4 text-center text-sm">
+            Hors ligne · affichage des dernières données enregistrées
+          </div>
+        )}
+
+        {shownError && online && (
           <div role="alert" className="bg-red-500/20 border border-red-500/50 text-red-200 p-3 rounded-2xl mb-4 text-center text-sm">
             {shownError}
           </div>

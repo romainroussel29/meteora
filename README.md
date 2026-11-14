@@ -30,6 +30,10 @@
 * **Villes favorites :** ajout en un clic (⭐) ; les favoris sont accessibles en haut de la page.
 * **Mémorisation :** la dernière ville consultée et les favoris sont sauvegardés dans le `localStorage`.
 
+### Application installable (PWA)
+* **Installable sur iPhone, Android et ordinateur** sans passer par un store : icône sur l'écran d'accueil, ouverture en plein écran, prise en compte de l'encoche de l'iPhone.
+* **Fonctionne hors ligne** grâce à un *service worker* : l'application démarre sans réseau et affiche les dernières prévisions enregistrées, avec un bandeau « Hors ligne ».
+
 ### Qualité
 * **Requêtes robustes :** vérification des erreurs HTTP, annulation des requêtes concurrentes (une réponse lente ne peut pas écraser une plus récente), messages d'erreur clairs.
 * **Tests unitaires** avec Vitest (60 tests sur la logique métier : vent, icônes, découpage horaire, géolocalisation et appels API simulés…).
@@ -58,6 +62,9 @@
 meteora/
 ├── .github/workflows/ci.yml     # Lint + tests + build à chaque push
 ├── public/
+│   ├── manifest.webmanifest     # Manifeste PWA (nom, icônes, couleurs)
+│   ├── sw.js                    # Service worker (cache et mode hors ligne)
+│   └── icons/                   # Icônes de l'application
 ├── src/
 │   ├── components/
 │   │   ├── CurrentWeather.jsx   # Carte de la météo actuelle (boussole du vent, détails)
@@ -70,7 +77,8 @@ meteora/
 │   │   └── WeatherBackdrop.jsx  # Fond animé (soleil, pluie, neige, orage…)
 │   ├── hooks/
 │   │   ├── useWeather.js        # Chargement des données, annulation, mémorisation
-│   │   └── useFavorites.js      # Gestion des favoris (localStorage)
+│   │   ├── useFavorites.js      # Gestion des favoris (localStorage)
+│   │   └── useOnlineStatus.js   # Détection du mode hors ligne
 │   ├── utils/
 │   │   ├── api.js               # Appels aux API (Open-Meteo, Nominatim)
 │   │   ├── hourly.js            # Prochaines 24 h et heures d'une journée
@@ -84,6 +92,14 @@ meteora/
 │   └── main.jsx                 # Point d'entrée de l'application
 └── package.json
 ```
+
+---
+
+## 📱 Installer l'application
+
+* **iPhone / iPad (Safari) :** ouvrir le site → bouton **Partager** → **Sur l'écran d'accueil**.
+* **Android (Chrome) :** ouvrir le site → menu **⋮** → **Installer l'application**.
+* **Ordinateur (Chrome / Edge) :** cliquer sur l'icône d'installation dans la barre d'adresse.
 
 ---
 
