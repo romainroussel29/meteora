@@ -1,141 +1,141 @@
-# 🌤️ Meteora - Tableau de bord météorologique
+<div align="center">
+
+<img src="./public/favicon.svg" alt="Logo Meteora" width="96" height="96" />
+
+# Meteora
+
+**La météo en temps réel, claire et installable sur votre téléphone.**
 
 [![CI](https://github.com/romainroussel29/meteora/actions/workflows/ci.yml/badge.svg)](https://github.com/romainroussel29/meteora/actions/workflows/ci.yml)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
+![Vitest](https://img.shields.io/badge/tests-Vitest-6E9F18?logo=vitest&logoColor=white)
+![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)
 
-**Meteora** est une application web moderne et responsive pour consulter la météo en temps réel, les prévisions heure par heure et sur 7 jours (avec détail toutes les 2 heures) pour n'importe quelle ville du monde. Ce projet fait partie de mon portfolio de développeur web : il montre ma maîtrise de React (hooks personnalisés, gestion d'état, accessibilité), de l'intégration d'API REST et d'une architecture propre et testée.
+### [🌐 Ouvrir la démo](https://meteora-ten-sooty.vercel.app)
 
-🔗 **[Voir la démo en ligne](https://meteora-ten-sooty.vercel.app)**
+</div>
 
 ---
 
-## 📸 Aperçu de l'application
+## 📸 Aperçu
 
-![Aperçu de Meteora](./screenshot.png)
+<table>
+  <tr>
+    <td width="70%" align="center"><img src="./docs/screenshots/desktop.png" alt="Meteora sur ordinateur" /><br /><sub>Ordinateur : météo actuelle, 24 h et détail d'un jour toutes les 2 h</sub></td>
+    <td width="30%" align="center"><img src="./docs/screenshots/mobile.png" alt="Meteora sur iPhone" /><br /><sub>iPhone</sub></td>
+  </tr>
+</table>
 
 ---
 
 ## ✨ Fonctionnalités
 
-### Météo
-* **Météo actuelle détaillée :** température, ressenti, conditions (codes WMO), humidité, risque de pluie, min/max du jour, heures de lever et de coucher du soleil.
-* **Vent :** boussole avec une flèche qui indique le sens du vent ; sa taille et sa couleur varient avec la vitesse. Libellé selon l'échelle de Beaufort (« Brise légère », « Vent fort »…), direction cardinale et rafales.
-* **Prévisions heure par heure (24 h) :** courbe de température lissée en SVG, probabilité de pluie et vent pour chaque heure. Sur grand écran, les 24 heures tiennent dans la largeur ; sur mobile et tablette, on les fait défiler au doigt, sans barre de défilement visible.
-* **Prévisions sur 7 jours :** barre de températures min/max à l'échelle de la semaine. **Un clic sur un jour** affiche le détail **toutes les 2 heures** (temps, température, pluie, vent), à faire défiler au doigt sur mobile, ou à la souris (glisser ou flèches ◀ ▶) sur ordinateur.
-* **Fond animé selon la météo :** halo de soleil, étoiles la nuit, nuages qui dérivent, pluie, neige, éclairs d'orage ou nappes de brouillard, sur un dégradé qui passe en mode nuit après le coucher du soleil. Animations en CSS pur, désactivées si le système demande de réduire les animations. Aperçu possible via l'URL : `?meteo=pluie`, `?meteo=neige`, `?meteo=orage`, `?meteo=nuit`…
+| | |
+| --- | --- |
+| 🌡️ **Météo actuelle** | Température, ressenti, humidité, risque de pluie, min / max, lever et coucher du soleil |
+| 🧭 **Vent** | Boussole avec flèche orientée, taille et couleur selon la force, échelle de Beaufort et rafales |
+| ⏱️ **24 heures** | Courbe de température, pluie et vent heure par heure, défilement au doigt sur mobile |
+| 📅 **7 jours** | Températures min / max à l'échelle de la semaine ; un clic ouvre le détail **toutes les 2 h** |
+| 🎨 **Fond animé** | Soleil, étoiles, nuages, pluie, neige, orage ou brouillard selon la météo réelle |
+| 📍 **Géolocalisation** | Météo du lieu où l'on se trouve à chaque ouverture, avec le vrai nom de la ville |
+| 🔎 **Recherche** | Autocomplétion des villes, utilisable entièrement au clavier |
+| ⭐ **Favoris** | Villes favorites et dernière ville consultée mémorisées |
+| 📱 **Application** | Installable sur iPhone, Android et ordinateur, fonctionne hors ligne |
 
-### Recherche & navigation
-* **Autocomplétion intelligente :** suggestions de villes en temps réel avec un **debounce (300 ms)**. Chaque requête obsolète est annulée (`AbortController`).
-* **Accessible au clavier :** navigation dans les suggestions avec ↑ ↓, Entrée pour valider, Échap pour fermer (pattern ARIA *combobox*).
-* **Géolocalisation automatique :** à chaque ouverture, l'application affiche la météo du lieu où l'on se trouve (si l'utilisateur l'autorise), avec **géocodage inverse** pour afficher le vrai nom de la ville. En cas de refus, elle rouvre la dernière ville consultée. Un bouton permet aussi de se relocaliser à tout moment.
-* **Villes favorites :** ajout en un clic (⭐) ; les favoris sont accessibles en haut de la page.
-* **Mémorisation :** la dernière ville consultée et les favoris sont sauvegardés dans le `localStorage`.
-
-### Application installable (PWA)
-* **Installable sur iPhone, Android et ordinateur** sans passer par un store : icône sur l'écran d'accueil, ouverture en plein écran, prise en compte de l'encoche de l'iPhone.
-* **Fonctionne hors ligne** grâce à un *service worker* : l'application démarre sans réseau et affiche les dernières prévisions enregistrées, avec un bandeau « Hors ligne ».
-
-### Qualité
-* **Requêtes robustes :** vérification des erreurs HTTP, annulation des requêtes concurrentes (une réponse lente ne peut pas écraser une plus récente), messages d'erreur clairs.
-* **Tests unitaires** avec Vitest (60 tests sur la logique métier : vent, icônes, découpage horaire, géolocalisation et appels API simulés…).
-* **Intégration continue :** GitHub Actions lance le lint, les tests et le build à chaque push.
-* **Interface responsive et épurée :** design *glassmorphism* compact, pensé pour voir l'essentiel sans faire défiler, sur ordinateur comme sur smartphone.
-
----
-
-## 🛠️ Technologies utilisées
-
-* **Front-end :** [React 19](https://react.dev/) (hooks personnalisés)
-* **Build Tool :** [Vite](https://vitejs.dev/)
-* **Styling :** [Tailwind CSS 4](https://tailwindcss.com/)
-* **Icônes :** [Lucide React](https://lucide.dev/)
-* **Tests :** [Vitest](https://vitest.dev/)
-* **Données & API :**
-  * [Open-Meteo](https://open-meteo.com/) : prévisions météo et géocodage (sans clé API)
-  * [Nominatim / OpenStreetMap](https://nominatim.org/) : géocodage inverse
-* **CI/CD :** GitHub Actions + déploiement continu sur [Vercel](https://vercel.com/)
-
----
-
-## 📂 Architecture du projet
-
-```text
-meteora/
-├── .github/workflows/ci.yml     # Lint + tests + build à chaque push
-├── public/
-│   ├── manifest.webmanifest     # Manifeste PWA (nom, icônes, couleurs)
-│   ├── sw.js                    # Service worker (cache et mode hors ligne)
-│   └── icons/                   # Icônes de l'application
-├── src/
-│   ├── components/
-│   │   ├── CurrentWeather.jsx   # Carte de la météo actuelle (boussole du vent, détails)
-│   │   ├── HourlyForecast.jsx   # Courbe et prévisions des 24 prochaines heures
-│   │   ├── ForecastList.jsx     # Prévisions 7 jours + détail toutes les 2 h au clic
-│   │   ├── HScroll.jsx          # Défilement horizontal (doigt, souris, flèches) sans barre
-│   │   ├── SearchBar.jsx        # Recherche, autocomplétion clavier, géolocalisation
-│   │   ├── FavoritesBar.jsx     # Liste des villes favorites
-│   │   ├── WindArrow.jsx        # Flèche de vent orientée et colorée selon la vitesse
-│   │   └── WeatherBackdrop.jsx  # Fond animé (soleil, pluie, neige, orage…)
-│   ├── hooks/
-│   │   ├── useWeather.js        # Chargement des données, annulation, mémorisation
-│   │   ├── useFavorites.js      # Gestion des favoris (localStorage)
-│   │   └── useOnlineStatus.js   # Détection du mode hors ligne
-│   ├── utils/
-│   │   ├── api.js               # Appels aux API (Open-Meteo, Nominatim)
-│   │   ├── hourly.js            # Prochaines 24 h et heures d'une journée
-│   │   ├── wind.js              # Direction cardinale et échelle de Beaufort
-│   │   ├── weatherIcons.jsx     # Codes météo WMO → icônes et libellés (jour / nuit)
-│   │   ├── background.js        # Dégradé et scène animée selon la météo
-│   │   ├── geolocation.js       # Position de l'utilisateur + nom de la ville
-│   │   ├── storage.js           # Accès sécurisé au localStorage
-│   │   └── __tests__/           # Tests unitaires Vitest
-│   ├── App.jsx                  # Composant racine (assemblage de l'interface)
-│   └── main.jsx                 # Point d'entrée de l'application
-└── package.json
-```
+> 💡 Pour voir les fonds animés sans attendre la bonne météo, ajoutez `?meteo=` à l'adresse :
+> [`?meteo=neige`](https://meteora-ten-sooty.vercel.app/?meteo=neige) ·
+> [`?meteo=orage`](https://meteora-ten-sooty.vercel.app/?meteo=orage) ·
+> [`?meteo=pluie`](https://meteora-ten-sooty.vercel.app/?meteo=pluie) ·
+> [`?meteo=nuit`](https://meteora-ten-sooty.vercel.app/?meteo=nuit) ·
+> [`?meteo=brouillard`](https://meteora-ten-sooty.vercel.app/?meteo=brouillard)
 
 ---
 
 ## 📱 Installer l'application
 
-* **iPhone / iPad (Safari) :** ouvrir le site → bouton **Partager** → **Sur l'écran d'accueil**.
-* **Android (Chrome) :** ouvrir le site → menu **⋮** → **Installer l'application**.
-* **Ordinateur (Chrome / Edge) :** cliquer sur l'icône d'installation dans la barre d'adresse.
+Meteora est une **PWA** (*Progressive Web App*) : elle s'installe directement depuis le navigateur, sans passer par un store.
+
+| Appareil | Marche à suivre |
+| --- | --- |
+| **iPhone / iPad** | Ouvrir le site dans **Safari** → **Partager** → **Sur l'écran d'accueil** |
+| **Android** | Ouvrir le site dans **Chrome** → menu **⋮** → **Installer l'application** |
+| **Ordinateur** | Dans Chrome ou Edge, cliquer sur l'icône d'installation de la barre d'adresse |
+
+Une fois installée, l'application s'ouvre en plein écran et affiche les dernières prévisions même sans connexion.
+
+---
+
+## 🛠️ Points techniques
+
+Ce projet fait partie de mon portfolio. Voici les choix techniques qui me semblaient importants :
+
+- **Hooks personnalisés** : `useWeather` (chargement, erreurs, mémorisation), `useFavorites` et `useOnlineStatus` (avec `useSyncExternalStore`) gardent les composants simples.
+- **Requêtes robustes** : vérification des erreurs HTTP et annulation des requêtes obsolètes avec `AbortController`. Une réponse lente ne peut jamais écraser une recherche plus récente.
+- **Autocomplétion optimisée** : *debounce* de 300 ms et pattern ARIA *combobox* (↑ ↓, Entrée, Échap).
+- **Graphique sans librairie** : courbe de température en SVG (courbes de Bézier) et défilement horizontal maison (doigt, glisser à la souris, flèches).
+- **Animations en CSS pur** : le fond météo n'utilise aucune librairie et respecte le réglage « réduire les animations ».
+- **PWA** : manifeste, icônes, *service worker* écrit à la main (cache de l'application, réseau d'abord pour la météo, secours hors ligne), prise en compte de l'encoche de l'iPhone.
+- **Qualité** : 60 tests unitaires avec Vitest sur la logique métier, ESLint, et intégration continue GitHub Actions (lint + tests + build) à chaque push.
+
+### Stack
+
+| Domaine | Outils |
+| --- | --- |
+| Interface | React 19, Tailwind CSS 4, Lucide React |
+| Build | Vite |
+| Tests et qualité | Vitest, ESLint, GitHub Actions |
+| Données | [Open-Meteo](https://open-meteo.com/) (prévisions et recherche de villes, sans clé API), [Nominatim / OpenStreetMap](https://nominatim.org/) (nom de la ville à partir de la position) |
+| Hébergement | Vercel (déploiement automatique à chaque push) |
 
 ---
 
 ## 🚀 Lancer le projet en local
 
-1. **Cloner le dépôt :**
-   ```bash
-   git clone https://github.com/romainroussel29/meteora.git
-   cd meteora
-   ```
+**Prérequis :** Node.js 22 ou plus récent.
 
-2. **Installer les dépendances :**
-   ```bash
-   npm install
-   ```
+```bash
+git clone https://github.com/romainroussel29/meteora.git
+cd meteora
+npm install
+npm run dev
+```
 
-3. **Lancer le serveur de développement :**
-   ```bash
-   npm run dev
-   ```
+L'application est alors disponible sur `http://localhost:5173`.
 
-4. Ouvrir `http://localhost:5173` dans le navigateur.
-
-### Autres commandes
-
-| Commande             | Description                              |
-| -------------------- | ---------------------------------------- |
-| `npm test`           | Lance les tests unitaires une fois       |
-| `npm run test:watch` | Lance les tests en mode surveillance     |
-| `npm run lint`       | Vérifie la qualité du code avec ESLint   |
-| `npm run build`      | Génère la version de production          |
-| `npm run preview`    | Prévisualise la version de production    |
+| Commande | Description |
+| --- | --- |
+| `npm run dev` | Serveur de développement |
+| `npm test` | Tests unitaires |
+| `npm run test:watch` | Tests en mode surveillance |
+| `npm run lint` | Analyse du code avec ESLint |
+| `npm run build` | Version de production |
+| `npm run preview` | Aperçu de la version de production (avec le mode hors ligne) |
 
 ---
 
-## 👨‍💻 Auteur
+## 📂 Structure du projet
 
-**Romain Roussel** – Développeur Web
-* GitHub : [@romainroussel29](https://github.com/romainroussel29)
+```text
+src/
+├── components/     # Interface : météo actuelle, 24 h, 7 jours, recherche, favoris, fond animé…
+├── hooks/          # useWeather, useFavorites, useOnlineStatus
+├── utils/          # API, géolocalisation, vent, icônes, découpage horaire, stockage
+│   └── __tests__/  # Tests unitaires Vitest
+├── App.jsx         # Assemblage de l'interface
+└── main.jsx        # Point d'entrée + enregistrement du service worker
+public/
+├── manifest.webmanifest   # Description de l'application installable
+├── sw.js                  # Service worker (cache et hors ligne)
+└── icons/                 # Icônes de l'application
+```
+
+---
+
+## 👤 Auteur
+
+**Romain Roussel**, développeur web
+[GitHub @romainroussel29](https://github.com/romainroussel29)
+
+<sub>Données météo fournies par [Open-Meteo](https://open-meteo.com/) · Géocodage © contributeurs [OpenStreetMap](https://www.openstreetmap.org/copyright)</sub>
