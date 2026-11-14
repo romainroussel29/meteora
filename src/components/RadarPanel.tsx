@@ -31,7 +31,7 @@ export default function RadarPanel({ latitude, longitude, onClose }: RadarPanelP
         <h3 className="text-sm font-semibold flex items-center gap-2">
           <Radar className="w-4 h-4 text-sky-300" aria-hidden="true" />
           Radar des précipitations
-          <span className="font-normal text-slate-300">· −2 h → +4 h</span>
+          <span className="font-normal text-slate-300">· 2 dernières heures</span>
         </h3>
         <button
           type="button"

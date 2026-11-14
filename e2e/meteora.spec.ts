@@ -15,13 +15,6 @@ async function mockApis(page: Page) {
 
   await page.route('https://api.open-meteo.com/v1/forecast**', (route) => {
     const url = new URL(route.request().url());
-    // Grille de pluie prévue (carte radar, 4 h à venir) : un peu de pluie partout
-    if (url.searchParams.get('hourly') === 'precipitation') {
-      const count = url.searchParams.get('latitude')!.split(',').length;
-      const now = Math.floor(Date.now() / 3_600_000) * 3600;
-      const hourly = { time: [0, 1, 2, 3, 4].map((h) => now + h * 3600), precipitation: [0, 0.4, 1.5, 3, 0.2] };
-      return route.fulfill({ json: Array(count).fill({ hourly }) });
-    }
     if (url.searchParams.has('hourly')) {
       calls.forecast++;
       return route.fulfill({ json: makeForecast() });
@@ -36,7 +29,7 @@ async function mockApis(page: Page) {
 
   // Radar et fonds de carte : réponses vides (on vérifie l'interface, pas les images)
   await page.route('https://api.rainviewer.com/**', (route) =>
-    route.fulfill({ json: { host: 'https://tilecache.rainviewer.com', radar: { past: [{ time: 1794664200, path: '/v2/radar/test' }] } } })
+    route.fulfill({ json: { host: 'https://tilecache.rainviewer.com', radar: { past: [1794664200, 1794664800, 1794665400].map((time) => ({ time, path: `/v2/radar/${time}` })) } } })
   );
   await page.route(/(rainviewer\.com\/.*\.png|arcgisonline\.com\/)/, (route) => route.abort());
 
@@ -104,13 +97,13 @@ test('ouvre la carte radar à la demande', async ({ page }) => {
   await page.getByRole('button', { name: 'Radar' }).click();
   await expect(page.getByRole('region', { name: 'Radar des précipitations' })).toBeVisible();
   await expect(page.locator('.leaflet-container')).toBeVisible();
-  const slider = page.getByRole('slider', { name: 'Heure affichée sur la carte' });
-  await expect(slider).toBeVisible();
-  // Frise : 1 image radar observée + 4 heures de prévision
-  await expect(slider).toHaveAttribute('max', '4');
+  const slider = page.getByRole('slider', { name: "Heure de l'image radar" });
+  await expect(slider).toHaveAttribute('max', '2'); // 3 images radar
   await page.getByRole('button', { name: "Mettre l'animation en pause" }).click();
-  await slider.fill('4');
-  await expect(page.getByText('Prévision +4 h')).toBeVisible();
+  await slider.fill('0');
+  await expect(page.getByText('Observé', { exact: true })).toBeVisible();
+  await slider.fill('2');
+  await expect(page.getByText('Maintenant', { exact: true })).toBeVisible();
 
   // Choix du zoom et recentrage
   const zoom = page.getByRole('group', { name: 'Niveau de zoom' });

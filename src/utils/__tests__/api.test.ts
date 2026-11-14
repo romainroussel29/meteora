@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { buildForecastUrl, searchCities, reverseGeocode, fetchCurrentForMany, fetchWeather, clearApiCaches, buildGrid, fetchPrecipitationGrid } from '../api';
+import { buildForecastUrl, searchCities, reverseGeocode, fetchCurrentForMany, fetchWeather, clearApiCaches } from '../api';
 
 const mockFetch = (body: unknown, ok = true, status = 200) =>
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok, status, json: () => Promise.resolve(body) }));
@@ -155,28 +155,6 @@ describe('cache des appels API', () => {
     mockFetch({ address: { city: 'Marseille', country: 'France' } });
     await reverseGeocode(43.2965, 5.3698);
     expect(await reverseGeocode(43.2971, 5.3702)).toBe('Marseille, France');
-    expect(fetch).toHaveBeenCalledOnce();
-  });
-});
-
-describe('prévision de pluie sur une grille (carte 4 h)', () => {
-  it('construit une grille 9 × 9 centrée sur la ville', () => {
-    const { points, stepLat, stepLon } = buildGrid({ latitude: 43.3, longitude: 5.37 });
-    expect(points).toHaveLength(81);
-    expect(points[40]).toEqual({ latitude: 43.3, longitude: 5.37 }); // le centre
-    expect(stepLon).toBeGreaterThan(stepLat); // corrigé de la latitude
-  });
-
-  it('ne garde que les 4 prochaines heures, en une seule requête mise en cache', async () => {
-    const now = Math.floor(Date.now() / 1000);
-    const hourly = { time: [now - 1800, now + 1800, now + 5400, now + 9000, now + 12600], precipitation: [9, 1, 2, 3, 4] };
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(Array(81).fill({ hourly })) }));
-
-    const grid = await fetchPrecipitationGrid({ latitude: 43.3, longitude: 5.37 });
-    expect(grid.times).toHaveLength(4);
-    expect(grid.cells[0].mm).toEqual([1, 2, 3, 4]); // l'heure passée (9 mm) est écartée
-
-    await fetchPrecipitationGrid({ latitude: 43.32, longitude: 5.4 }); // ~3 km : même grille
     expect(fetch).toHaveBeenCalledOnce();
   });
 });

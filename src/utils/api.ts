@@ -69,7 +69,6 @@ function findNearbyEntry<T>(cache: ReturnType<typeof createCache<T>>, target: Co
 /** Vide tous les caches d'API (utile pour les tests) */
 export function clearApiCaches() {
   [forecastCache, favoritesCache, searchCache, reverseCache].forEach((c) => c.clear());
-  gridCache.clear();
 }
 
 interface FetchOptions {
@@ -171,80 +170,4 @@ export async function reverseGeocode(latitude: number, longitude: number): Promi
     return city ? [city, a.country].filter(Boolean).join(', ') : null;
   });
   return entry.value;
-}
-
-// ─────────────── Prévision de pluie sur une grille (carte « 4 h à venir ») ───────────────
-
-export interface PrecipitationGrid {
-  /** Heures de prévision (timestamps Unix en secondes, UTC), dans le futur */
-  times: number[];
-  /** Taille d'une maille, en degrés */
-  stepLat: number;
-  stepLon: number;
-  /** Pluie prévue (mm/h) pour chaque point et chaque heure de `times` */
-  cells: { latitude: number; longitude: number; mm: number[] }[];
-}
-
-export const GRID_SIZE = 9; // 9 × 9 = 81 points
-export const GRID_STEP_DEG = 0.4; // ~45 km entre deux points
-export const FORECAST_HOURS = 4;
-
-/** Points d'une grille carrée centrée sur un lieu (espacement en longitude corrigé de la latitude) */
-export function buildGrid(center: Coords, size = GRID_SIZE, stepLat = GRID_STEP_DEG) {
-  const stepLon = stepLat / Math.cos((center.latitude * Math.PI) / 180);
-  const half = (size - 1) / 2;
-  const points: Coords[] = [];
-  for (let row = -half; row <= half; row++) {
-    for (let col = -half; col <= half; col++) {
-      points.push({
-        latitude: +(center.latitude + row * stepLat).toFixed(3),
-        longitude: +(center.longitude + col * stepLon).toFixed(3),
-      });
-    }
-  }
-  return { points, stepLat, stepLon };
-}
-
-const gridCache = createCache<PrecipitationGrid>({ name: 'precip-grid', ttl: 15 * MINUTE, maxEntries: 5 });
-
-interface HourlyPrecipitation {
-  hourly: { time: number[]; precipitation: number[] };
-}
-
-/**
- * Pluie prévue pour les 4 prochaines heures sur une grille autour d'un lieu,
- * en une seule requête Open-Meteo (mise en cache 15 min, partagée dans un rayon de 20 km).
- */
-export function fetchPrecipitationGrid(center: Coords, signal?: AbortSignal): Promise<PrecipitationGrid> {
-  const nearby = findNearbyEntry(gridCache, center, 20);
-  if (nearby) return withAbort(Promise.resolve(nearby.value), signal);
-
-  const request = gridCache.fetch(coordsKey(center.latitude, center.longitude, 2), async () => {
-    const { points, stepLat, stepLon } = buildGrid(center);
-    const params = new URLSearchParams({
-      latitude: points.map((p) => p.latitude).join(','),
-      longitude: points.map((p) => p.longitude).join(','),
-      hourly: 'precipitation',
-      forecast_hours: String(FORECAST_HOURS + 1),
-      timeformat: 'unixtime',
-      timezone: 'GMT',
-    });
-    const data = await fetchJson<HourlyPrecipitation | HourlyPrecipitation[]>(`${FORECAST_URL}?${params}`);
-    const list = Array.isArray(data) ? data : [data];
-
-    // On ne garde que les heures à venir (l'heure en cours est déjà couverte par le radar)
-    const nowSec = Date.now() / 1000;
-    const keep = list[0].hourly.time
-      .map((t, i) => ({ t, i }))
-      .filter(({ t }) => t > nowSec)
-      .slice(0, FORECAST_HOURS);
-
-    return {
-      times: keep.map(({ t }) => t),
-      stepLat,
-      stepLon,
-      cells: points.map((p, n) => ({ ...p, mm: keep.map(({ i }) => list[n]?.hourly.precipitation[i] ?? 0) })),
-    };
-  });
-  return withAbort(request.then((entry) => entry.value), signal);
 }

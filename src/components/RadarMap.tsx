@@ -1,11 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Pane, ImageOverlay, useMap, useMapEvents } from 'react-leaflet';
-import type { LatLngBoundsExpression } from 'leaflet';
-import { LocateFixed, Pause, Play } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { MapContainer, TileLayer, CircleMarker, Pane, useMap, useMapEvents } from 'react-leaflet';
+import type { Map as LeafletMap } from 'leaflet';
+import { LocateFixed, Minus, Pause, Play, Plus } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import { createCache, withAbort } from '../utils/cache';
-import { fetchPrecipitationGrid, type PrecipitationGrid } from '../utils/api';
-import { renderPrecipitationPixels } from '../utils/rainImage';
 
 const RAINVIEWER_URL = 'https://api.rainviewer.com/public/weather-maps.json';
 // Fond de carte sombre Esri (utilisable sans clé d'API, avec attribution)
@@ -37,44 +35,15 @@ const loadRadar = () =>
 const formatTime = (unix: number) =>
   new Date(unix * 1000).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
-/**
- * Images lissées de la pluie prévue (une par heure), à partir de la grille de points.
- * Calculées une seule fois par grille, pour une animation fluide.
- */
-function buildForecastImages(grid: PrecipitationGrid): { urls: string[]; bounds: LatLngBoundsExpression } | null {
-  const n = Math.round(Math.sqrt(grid.cells.length));
-  const canvas = document.createElement('canvas');
-  const size = 256;
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  if (!ctx || n < 2) return null;
-
-  const urls = grid.times.map((_, hour) => {
-    const values = grid.cells.map((c) => c.mm[hour] ?? 0);
-    const image = ctx.createImageData(size, size);
-    image.data.set(renderPrecipitationPixels(values, n, size));
-    ctx.putImageData(image, 0, 0);
-    return canvas.toDataURL('image/png');
-  });
-
-  // Les points sont rangés du sud-ouest au nord-est
-  const sw = grid.cells[0];
-  const ne = grid.cells[grid.cells.length - 1];
-  return { urls, bounds: [[sw.latitude, sw.longitude], [ne.latitude, ne.longitude]] };
-}
-
 const isAbort = (err: unknown) => err instanceof DOMException && err.name === 'AbortError';
 
-/** Une image de la frise : radar observé (passé) ou prévision du modèle (futur) */
-type Frame =
-  | { kind: 'observed'; time: number; path: string }
-  | { kind: 'forecast'; time: number; hour: number };
-
+// Couleurs de la palette radar RainViewer utilisée (schéma 2)
 const LEGEND = [
-  { label: 'Faible', color: '#7dd3fc' },
-  { label: 'Modérée', color: '#0ea5e9' },
+  { label: 'Faible', color: '#38bdf8' },
+  { label: 'Modérée', color: '#1e40af' },
   { label: 'Forte', color: '#facc15' },
   { label: 'Très forte', color: '#dc2626' },
+  { label: 'Extrême', color: '#e879f9' },
 ];
 
 /** Niveaux de zoom proposés */
@@ -84,9 +53,11 @@ const ZOOM_PRESETS = [
   { label: 'Pays', zoom: 5 },
 ] as const;
 const DEFAULT_ZOOM = 7;
+const MIN_ZOOM = 4;
+const MAX_ZOOM = 10;
 
 /**
- * Pilote la carte depuis l'extérieur (boutons « Recentrer » et niveaux de zoom),
+ * Pilote la carte depuis l'extérieur (bouton « Recentrer » et niveaux de zoom),
  * et remonte le zoom courant quand l'utilisateur zoome lui-même (pincement, double-clic).
  */
 function MapController({
@@ -124,17 +95,16 @@ interface RadarMapProps {
 }
 
 /**
- * Carte de la pluie : radar observé sur les 2 dernières heures (RainViewer),
- * puis prévision des 4 prochaines heures (modèle Open-Meteo sur une grille de points).
+ * Carte radar des précipitations observées sur les 2 dernières heures (RainViewer), animée.
  * Chargée à la demande (React.lazy) pour ne pas alourdir le démarrage de l'application.
  */
 export default function RadarMap({ latitude, longitude }: RadarMapProps) {
   const [radar, setRadar] = useState<{ host: string; frames: RadarFrame[] } | null>(null);
-  const [grid, setGrid] = useState<PrecipitationGrid | null>(null);
-  const [index, setIndex] = useState<number | null>(null); // null = « maintenant »
+  const [index, setIndex] = useState<number | null>(null); // null = image la plus récente
   const [playing, setPlaying] = useState(true);
-  const [errors, setErrors] = useState({ radar: false, grid: false });
+  const [failed, setFailed] = useState(false);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
+  const [map, setMap] = useState<LeafletMap | null>(null);
   // Demande de déplacement de la carte (le token change à chaque clic)
   const [target, setTarget] = useState({ zoom: DEFAULT_ZOOM, token: 0 });
   const goTo = (z: number) => setTarget((t) => ({ zoom: z, token: t.token + 1 }));
@@ -144,58 +114,40 @@ export default function RadarMap({ latitude, longitude }: RadarMapProps) {
     withAbort(loadRadar(), controller.signal)
       .then(({ value: data }) => setRadar({ host: data.host, frames: data.radar.past }))
       .catch((err: unknown) => {
-        if (!isAbort(err)) setErrors((e) => ({ ...e, radar: true }));
-      });
-    fetchPrecipitationGrid({ latitude, longitude }, controller.signal)
-      .then(setGrid)
-      .catch((err: unknown) => {
-        if (!isAbort(err)) setErrors((e) => ({ ...e, grid: true }));
+        if (!isAbort(err)) setFailed(true);
       });
     return () => controller.abort();
-  }, [latitude, longitude]);
+  }, []);
 
-  // Frise chronologique : radar observé (passé) puis prévision (futur)
-  const frames: Frame[] = [
-    ...(radar?.frames ?? []).map((f): Frame => ({ kind: 'observed', time: f.time, path: f.path })),
-    ...(grid?.times ?? []).map((time, hour): Frame => ({ kind: 'forecast', time, hour })),
-  ];
-  const nowIndex = Math.max((radar?.frames.length ?? 0) - 1, 0);
-  const currentIndex = Math.min(index ?? nowIndex, Math.max(frames.length - 1, 0));
-  const current: Frame | undefined = frames[currentIndex];
+  const frames = radar?.frames ?? [];
   const frameCount = frames.length;
+  const lastIndex = Math.max(frameCount - 1, 0);
+  const currentIndex = Math.min(index ?? lastIndex, lastIndex);
+  const current: RadarFrame | undefined = frames[currentIndex];
 
-  // Animation : toute la frise défile en boucle
+  // Animation : les images radar défilent en boucle
   useEffect(() => {
     if (!playing || frameCount < 2) return;
-    const id = setInterval(() => setIndex((i) => ((i ?? nowIndex) + 1) % frameCount), FRAME_MS);
+    const id = setInterval(() => setIndex((i) => ((i ?? lastIndex) + 1) % frameCount), FRAME_MS);
     return () => clearInterval(id);
-  }, [playing, frameCount, nowIndex]);
+  }, [playing, frameCount, lastIndex]);
 
-  // Images de prévision (calculées une fois par grille)
-  const forecastImages = useMemo(() => (grid ? buildForecastImages(grid) : null), [grid]);
-
-  if (errors.radar && errors.grid) {
+  if (failed) {
     return <p className="text-sm text-slate-300 py-6 text-center">Le radar est momentanément indisponible.</p>;
   }
 
-  const forecastHour = current?.kind === 'forecast' ? current.hour : null;
-  const badge = !current
-    ? null
-    : current.kind === 'forecast'
-      ? `Prévision +${current.hour + 1} h`
-      : currentIndex === nowIndex
-        ? 'Maintenant'
-        : 'Observé';
+  const badge = current ? (currentIndex === lastIndex ? 'Maintenant' : 'Observé') : null;
 
   return (
     <div className="space-y-2">
       {/* "isolate" : les calques Leaflet (z-index élevés) restent sous le reste de l'interface */}
       <div className="relative isolate h-72 md:h-96 rounded-2xl overflow-hidden border border-white/10">
         <MapContainer
+          ref={setMap}
           center={[latitude, longitude]}
           zoom={DEFAULT_ZOOM}
-          minZoom={4}
-          maxZoom={10}
+          minZoom={MIN_ZOOM}
+          maxZoom={MAX_ZOOM}
           scrollWheelZoom={false}
           zoomControl={false}
           className="h-full w-full bg-slate-900"
@@ -203,31 +155,19 @@ export default function RadarMap({ latitude, longitude }: RadarMapProps) {
           <TileLayer
             url={ESRI_DARK}
             maxNativeZoom={16}
-            attribution='Fond &copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · Radar <a href="https://www.rainviewer.com/">RainViewer</a> · Prévision <a href="https://open-meteo.com/">Open-Meteo</a>'
+            attribution='Fond &copy; <a href="https://www.esri.com/">Esri</a>, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · Radar <a href="https://www.rainviewer.com/">RainViewer</a>'
           />
 
-          {/* Radar observé : toutes les images sont chargées d'avance, seule la courante est visible */}
+          {/* Toutes les images sont chargées d'avance ; seule l'image courante est visible (animation fluide) */}
           {radar?.frames.map((frame) => (
             <TileLayer
               key={frame.path}
               url={`${radar.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`}
-              opacity={current?.kind === 'observed' && current.path === frame.path ? 0.75 : 0}
+              opacity={current?.path === frame.path ? 0.75 : 0}
               maxNativeZoom={7}
               zIndex={10}
             />
           ))}
-
-          {/* Prévision : dégradé calculé entre les points de la grille (interpolation) */}
-          <Pane name="forecast" style={{ zIndex: 350 }}>
-            {forecastImages && forecastHour !== null && (
-              <ImageOverlay
-                url={forecastImages.urls[forecastHour]}
-                bounds={forecastImages.bounds}
-                opacity={0.9}
-                pane="forecast"
-              />
-            )}
-          </Pane>
 
           {/* Noms des villes au-dessus de la pluie, pour se repérer */}
           <Pane name="labels" style={{ zIndex: 450, pointerEvents: 'none' }}>
@@ -241,7 +181,7 @@ export default function RadarMap({ latitude, longitude }: RadarMapProps) {
           <MapController latitude={latitude} longitude={longitude} target={target} onZoomChange={setZoom} />
         </MapContainer>
 
-        {/* Recentrer + choix du zoom */}
+        {/* Recentrer + zoom */}
         <div className="absolute top-2 left-2 z-[500] flex items-center gap-1.5">
           <button
             type="button"
@@ -252,6 +192,29 @@ export default function RadarMap({ latitude, longitude }: RadarMapProps) {
           >
             <LocateFixed className="w-4 h-4" />
           </button>
+          {/* Zoom pas à pas : utile à la souris (sur mobile, on pince la carte) */}
+          <div className="hidden md:flex rounded-full bg-slate-900/80 border border-white/20 shadow overflow-hidden">
+            <button
+              type="button"
+              onClick={() => map?.zoomOut()}
+              disabled={!map || zoom <= MIN_ZOOM}
+              title="Dézoomer"
+              aria-label="Dézoomer"
+              className="w-8 h-8 flex items-center justify-center text-white hover:bg-slate-800 cursor-pointer disabled:opacity-40 disabled:cursor-default"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => map?.zoomIn()}
+              disabled={!map || zoom >= MAX_ZOOM}
+              title="Zoomer"
+              aria-label="Zoomer"
+              className="w-8 h-8 flex items-center justify-center text-white hover:bg-slate-800 cursor-pointer border-l border-white/20 disabled:opacity-40 disabled:cursor-default"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
           <div role="group" aria-label="Niveau de zoom" className="flex rounded-full bg-slate-900/80 border border-white/20 p-0.5 shadow">
             {ZOOM_PRESETS.map((preset) => (
               <button
@@ -270,11 +233,7 @@ export default function RadarMap({ latitude, longitude }: RadarMapProps) {
         </div>
 
         {badge && (
-          <span
-            className={`absolute top-2 right-2 z-[500] rounded-full px-2.5 py-1 text-xs font-semibold shadow ${
-              current?.kind === 'forecast' ? 'bg-amber-400 text-slate-900' : 'bg-slate-900/80 text-white'
-            }`}
-          >
+          <span className="absolute top-2 right-2 z-[500] rounded-full px-2.5 py-1 text-xs font-semibold shadow bg-slate-900/80 text-white">
             {badge}
           </span>
         )}
@@ -293,14 +252,14 @@ export default function RadarMap({ latitude, longitude }: RadarMapProps) {
         <input
           type="range"
           min={0}
-          max={Math.max(frameCount - 1, 0)}
+          max={lastIndex}
           value={currentIndex}
           onChange={(e) => {
             setPlaying(false);
             setIndex(Number(e.target.value));
           }}
           disabled={frameCount < 2}
-          aria-label="Heure affichée sur la carte"
+          aria-label="Heure de l'image radar"
           aria-valuetext={current ? `${formatTime(current.time)}, ${badge}` : undefined}
           className="flex-1 accent-sky-400"
         />
@@ -308,8 +267,8 @@ export default function RadarMap({ latitude, longitude }: RadarMapProps) {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-300">
-        <span>Radar observé (2 h) puis prévision (4 h)</span>
-        <span className="flex items-center gap-2">
+        <span>Pluie observée sur les 2 dernières heures</span>
+        <span className="flex flex-wrap items-center gap-2">
           {LEGEND.map((l) => (
             <span key={l.label} className="flex items-center gap-1">
               <span className="w-2.5 h-2.5 rounded-full" style={{ background: l.color }} />
