@@ -11,7 +11,7 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-143_unitaires_·_14_E2E-6E9F18?logo=vitest&logoColor=white)
+![Tests](https://img.shields.io/badge/tests-133_unitaires_·_14_E2E-6E9F18?logo=vitest&logoColor=white)
 ![Lighthouse](https://img.shields.io/badge/Lighthouse-100%2F100%2F100%2F100-F44B21?logo=lighthouse&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?logo=pwa&logoColor=white)
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-green)](./LICENSE)
@@ -30,7 +30,7 @@
     <td width="30%" align="center"><img src="./docs/screenshots/mobile.png" alt="Meteora sur iPhone" /><br /><sub>iPhone</sub></td>
   </tr>
   <tr>
-    <td colspan="2" align="center"><img src="./docs/screenshots/radar.png" alt="Carte radar des précipitations" width="70%" /><br /><sub>Radar des précipitations : observé puis prévision à 4 h</sub></td>
+    <td colspan="2" align="center"><img src="./docs/screenshots/radar.png" alt="Carte radar des précipitations" width="70%" /><br /><sub>Radar des précipitations animé</sub></td>
   </tr>
 </table>
 
@@ -45,7 +45,7 @@
 | 🧭 **Vent** | Boussole avec flèche orientée, taille et couleur selon la force (vent faible, modéré, fort… d'après l'échelle de Beaufort) |
 | ⏱️ **24 heures** | Courbe de température, gouttelettes de pluie et vent heure par heure, défilement au doigt sur mobile |
 | 📅 **7 jours** | Températures min / max à l'échelle de la semaine ; un clic ouvre le détail **toutes les 2 h** |
-| 🗺️ **Radar** | Carte animée de la pluie : radar observé sur les 2 dernières heures, puis **prévision des 4 prochaines heures** (dégradé calculé par interpolation). Bouton « recentrer » et zoom Ville / Région / Pays. Ouverte d'un clic depuis la météo actuelle |
+| 🗺️ **Radar** | Carte radar animée de la pluie observée sur les 2 dernières heures. Boutons « recentrer », zoom + / − et niveaux Ville / Région / Pays. Ouverte d'un clic depuis la météo actuelle |
 | 🎨 **Fond animé** | Soleil, étoiles, nuages, pluie, neige, orage ou brouillard selon la météo réelle, dans un bandeau discret en haut de la page, avec des teintes d'aube et de crépuscule autour du lever et du coucher du soleil |
 | 📍 **Géolocalisation** | Météo du lieu où l'on se trouve en un clic (aucune demande d'autorisation à l'ouverture), avec le vrai nom de la ville |
 | 🔎 **Recherche** | Autocomplétion des villes, utilisable entièrement au clavier |
@@ -92,7 +92,6 @@ Ce projet fait partie de mon portfolio. Voici les choix techniques qui me sembla
   | Recherche de villes | 24 h | — |
   | Nom de la ville d'une position | 7 jours | 2 km |
   | Images radar | 5 min | — |
-  | Prévision de pluie sur la carte (grille de 81 points, 1 requête) | 15 min | 20 km |
 
   Tirer pour actualiser et le bouton « Actualisé à » contournent le cache pour obtenir des données fraîches.
 - **Actualisation intelligente** : vérification chaque minute et à chaque retour au premier plan (`visibilitychange`), car iOS suspend les minuteurs des applications en arrière-plan. Le « tirer pour actualiser » est fait maison avec les événements tactiles (seuil, résistance, verrouillage vertical).
